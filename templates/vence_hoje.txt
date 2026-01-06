@@ -1,0 +1,15 @@
+Oi {{nome}}, tudo bem? Graça e paz! 🙏
+
+Mauricio aqui! Sua mensalidade *vence hoje*! ⏰
+
+💰 *Valor:* R$ {{valor}}
+📅 *Vencimento:* {{vencimento}} (HOJE)
+
+*Chave PIX:* {{pix_chave}}
+
+*PIX Copia e Cola:*
+{{pix_copia_cola}}
+
+Por favor, realize o pagamento hoje e envie o comprovante! 📲
+
+Obrigado! 😊

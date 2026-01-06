@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cobrança Premium</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css?v=5">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+</head>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-gem"></i>
+                <span>PremiumSys</span>
+            </div>
+
+            <ul class="nav-links">
+                <li>
+                    <a href="#dashboard-section" data-target="dashboard-section" class="active">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#clients-section" data-target="clients-section">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#billing-section" data-target="billing-section">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                        <span>Cobrança</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#management-section" data-target="management-section">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Gestão</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content">
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="tab-content active">
+                <header class="section-header">
+                    <div>
+                        <h1>Visão Geral</h1>
+                        <p>Acompanhe o desempenho da sua escola</p>
+                    </div>
+                </header>
+
+                <div class="grid-container stats-grid">
+                    <div class="card stat-card">
+                        <div class="icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <h4>Total Alunos</h4>
+                            <h2 id="total-alunos">0</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-red"><i class="fa-solid fa-clock"></i></div>
+                        <div>
+                            <h4>Atrasados</h4>
+                            <h2 id="total-atrasados">0</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-green"><i class="fa-solid fa-dollar-sign"></i></div>
+                        <div>
+                            <h4>Recebido (Mês)</h4>
+                            <h2 id="total-recebido">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-yellow"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div>
+                            <h2 id="total-areceber">R$ 0,00</h2>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="icon-box" style="background: #475569;"><i class="fa-solid fa-user-slash"></i></div>
+                        <div>
+                            <h4>Isentos/Zerados</h4>
+                            <h2 id="total-isentos">0</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-details">
+                    <div class="card chart-card">
+                        <h3>Receita por Professor</h3>
+                        <ul id="professor-stats-list" class="stats-list">
+                            <!-- Injected via JS -->
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Management Section -->
+            <section id="management-section" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>Gestão Escolar</h1>
+                        <p>Professores e Cursos</p>
+                    </div>
+                </header>
+
+                <div class="grid-container">
+                    <!-- Professores -->
+                    <div class="card">
+                        <h3>Professores</h3>
+                        <div class="input-group">
+                            <input type="text" id="new-prof-name" placeholder="Novo Professor...">
+                            <button id="btn-add-prof" class="btn-primary"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <ul id="professors-list" class="simple-list"></ul>
+                    </div>
+
+                    <!-- Cursos -->
+                    <div class="card">
+                        <h3>Cursos</h3>
+                        <div class="input-group">
+                            <input type="text" id="new-course-name" placeholder="Nome do Curso...">
+                            <input type="number" id="new-course-value" placeholder="Valor Padrão (R$)"
+                                style="width: 120px;">
+                            <button id="btn-add-course" class="btn-primary"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <ul id="courses-list" class="simple-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clients Section -->
+            <section id="clients-section" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>Gestão de Clientes</h1>
+                        <p>Gerencie seus alunos e matrículas</p>
+                    </div>
+                    <button id="btn-new-client" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Novo Cliente
+                    </button>
+                </header>
+
+                <!-- Client List -->
+                <div class="grid-container" id="clients-list">
+                    <!-- Cards will be injected here via JS -->
+                </div>
+            </section>
+
+            <!-- Billing Section -->
+            <section id="billing-section" class="tab-content">
+                <header class="section-header">
+                    <div>
+                        <h1>Central de Cobrança</h1>
+                        <p>Gerencie os pagamentos mensais</p>
+                    </div>
+
+                    <div class="search-bar" style="gap: 1rem;">
+                        <!-- Month Filter -->
+                        <input type="month" id="billing-month"
+                            style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white;">
+
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-search"
+                                style="position: absolute; left: 10px; top: 12px; color: var(--text-muted);"></i>
+                            <input type="text" id="billing-search" placeholder="Buscar cliente..."
+                                style="padding-left: 30px;">
+                        </div>
+                    </div>
+                </header>
+
+                <div class="table-container card">
+                    <table class="billing-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>WhatsApp</th>
+                                <th>Valor a Cobrar (Editável)</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-list">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Client Modal -->
+    <div id="client-modal" class="modal-overlay hidden">
+        <div class="card modal-card">
+            <header class="modal-header">
+                <h3>Cadastrar Novo Cliente</h3>
+                <button class="btn-secondary" id="btn-close-client-modal"><i class="fa-solid fa-times"></i></button>
+            </header>
+
+            <form id="form-client">
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="client-name" required placeholder="Ex: João Silva">
+                </div>
+                <div class="form-group">
+                    <label>Endereço</label>
+                    <input type="text" id="client-address" required placeholder="Ex: Rua das Flores, 123">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp (apenas números)</label>
+                    <input type="text" id="client-phone" required placeholder="Ex: 5511999999999">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="client-value" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Dia Venc.</label>
+                        <input type="number" id="client-due-day" min="1" max="31" value="10">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Professor</label>
+                    <div class="input-with-button">
+                        <select id="client-professor">
+                            <option value="">Selecione...</option>
+                        </select>
+                        <button type="button" class="btn-secondary" id="btn-quick-add-prof" title="Novo Professor">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Curso</label>
+                    <div class="input-with-button">
+                        <select id="client-course">
+                            <option value="">Selecione...</option>
+                        </select>
+                        <button type="button" class="btn-secondary" id="btn-quick-add-course" title="Novo Curso">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="btn-cancel-client-modal">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- WhatsApp Modal -->
+    <div id="whatsapp-modal" class="modal-overlay hidden">
+        <div class="card modal-card">
+            <header class="modal-header">
+                <h3>Enviar Mensagem</h3>
+                <button class="btn-secondary" id="btn-close-modal"><i class="fa-solid fa-times"></i></button>
+            </header>
+
+            <div class="form-group">
+                <label>Tipo de Mensagem</label>
+                <div class="template-actions" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button type="button" class="btn-secondary" onclick="setMsgType('lembrete')"
+                        style="flex: 1; font-size: 0.8rem;">
+                        <i class="fa-regular fa-calendar"></i> Lembrete
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="setMsgType('hoje')"
+                        style="flex: 1; font-size: 0.8rem;">
+                        <i class="fa-solid fa-bell"></i> Hoje
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="setMsgType('atraso')"
+                        style="flex: 1; font-size: 0.8rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Atraso
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Prévia da Mensagem (Editável)</label>
+                <textarea id="whatsapp-preview" rows="12"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 8px; font-family: monospace; font-size: 0.9rem;"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1rem;">
+                    <i class="fa-solid fa-info-circle"></i> O QR Code deve ser anexado manualmente se necessário. O Pix
+                    Copia e Cola já está incluso no texto.
+                </div>
+                <button type="button" class="btn-whatsapp" id="btn-send-whatsapp"
+                    style="width: 100%; justify-content: center;">
+                    <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp Web
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (New) -->
+    <div id="confirm-modal" class="modal-overlay hidden" style="z-index: 2000;">
+        <div class="modal-confirm-content">
+            <div class="modal-title-icon">
+                <i class="fa-solid fa-circle-question"></i>
+            </div>
+            <h3 id="confirm-title" style="margin-bottom: 0.8rem; color: #fff; font-size: 1.5rem; font-weight: 700;">
+                Confirmar?</h3>
+            <p id="confirm-message" style="color: #94a3b8; margin-bottom: 2rem; font-size: 1.05rem; line-height: 1.6;">
+                Tem certeza?</p>
+            <div class="modal-confirm-actions">
+                <button class="btn-ghost" onclick="closeConfirmModal()">Cancelar</button>
+                <button class="btn-primary" id="btn-confirm-action">Sim, Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="js/app.js?v=32"></script>
+</body>
+
+</html>

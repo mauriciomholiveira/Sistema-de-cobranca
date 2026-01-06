@@ -1,0 +1,15 @@
+Oi {{nome}}, tudo bem? Graça e paz! 🙏
+
+Mauricio aqui! Passando para te lembrar da mensalidade do curso.
+
+💰 *Valor:* R$ {{valor}}
+📅 *Vencimento:* {{vencimento}}
+
+*Chave PIX:* {{pix_chave}}
+
+*PIX Copia e Cola:*
+{{pix_copia_cola}}
+
+Por favor, envie o comprovante após o pagamento! 📲
+
+Obrigado! 😊

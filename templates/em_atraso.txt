@@ -1,0 +1,16 @@
+Oi {{nome}}, tudo bem? Graça e paz! 🙏
+
+Mauricio aqui! Sua mensalidade está em atraso. ⚠️
+
+💰 *Valor:* R$ {{valor}}
+📅 *Vencimento:* {{vencimento}}
+⏱️ *Atraso:* {{dias_atraso}} dias
+
+*Chave PIX:* {{pix_chave}}
+
+*PIX Copia e Cola:*
+{{pix_copia_cola}}
+
+Por favor, regularize o pagamento e envie o comprovante o quanto antes! 📲
+
+Obrigado pela compreensão! 😊

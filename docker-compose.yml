@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_cobranca
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cobranca_user
+      POSTGRES_PASSWORD: cobranca_pass
+      POSTGRES_DB: cobranca_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cobranca_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cobranca_user -d cobranca_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  cobranca_network:
+    driver: bridge
