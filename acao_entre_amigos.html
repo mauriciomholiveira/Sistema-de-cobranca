@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envio de Mensagens WhatsApp</title>
+    <style>
+        :root {
+            --primary: #25D366;
+            --dark: #075E54;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #111b21;
+            --sub-text: #54656f;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .stats {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .message-box {
+            background: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        .message-preview {
+            background: #e7f8e8;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            border-left: 5px solid var(--primary);
+        }
+        .contact-list {
+            background: var(--card-bg);
+            border-radius: 0 0 10px 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .contact-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .contact-item:hover {
+            background-color: #f9f9f9;
+        }
+        .contact-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-weight: bold;
+        }
+        .contact-details h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+        }
+        .contact-details p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--sub-text);
+        }
+        .btn-send {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .btn-send:hover {
+            background-color: var(--dark);
+        }
+        .btn-send:active {
+            transform: scale(0.98);
+        }
+        .btn-send.sent {
+            background-color: #ccc;
+            color: #666;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Disparador WhatsApp</h1>
+            <div class="stats" id="progress">0 / 0 Enviaos</div>
+        </div>
+        <div class="message-box">
+            <h3>Mensagem Padrão</h3>
+            <div class="message-preview" id="msgPreview">
+                Olá [NOME], graça e paz tudo bem?
+                Estou entrando em contato com vc, para fazer o acerto dos blocos da AÇÃO ENTRE AMIGOS, até da DATA
+                LIMITE [ 31 de janeiro de 2026 ] de forma obrigatoria a todos.
+                * NÃO ESQUEÇAM: Assinar também a folha rosto que contem os seus dados, caso tenha ficado com algum
+                numero precisa também preencher o canhoto com os dados pois o sorteio NÃO sera online.
+            </div>
+        </div>
+        <div class="contact-list" id="contactList">
+            <!-- Items rendered via JS -->
+        </div>
+    </div>
+    <!-- Icons -->
+    <svg style="display: none;">
+        <symbol id="icon-send" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+        </symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+        </symbol>
+    </svg>
+    <script>
+        // Raw Data from User
+        const rawContacts = [
+            { name: "ANDERSON", phone: "48984415524" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "ANDRE", phone: "4891464033" },
+            { name: "CLELBER DA LEIA", phone: "4899421338" },
+            { name: "CLELBER DA LEIA", phone: "4899421338" },
+            { name: "CLELBER DA LEIA", phone: "4899421338" },
+            { name: "EDUARDO", phone: "48991233355" },
+            { name: "ERIC", phone: "48998635154" },
+            { name: "GABE DO DYONATTAM", phone: "5180549593" },
+            { name: "GUILHERME", phone: "48996857685" },
+            { name: "HENRIQUE DA JESSI", phone: "48996852513" },
+            { name: "HENRIQUE DA JESSI", phone: "48996852513" },
+            { name: "HENRIQUE DA JESSI", phone: "48996852513" },
+            { name: "HENRIQUE DA JESSI", phone: "48996852513" },
+            { name: "HENRIQUE DA JESSI", phone: "48996852513" },
+            { name: "JEBERSON", phone: "9299784708" },
+            { name: "JULIA DO JOÃO", phone: "48991140144" },
+            { name: "JULIO DA JOELMA", phone: "45998424000" },
+            { name: "KAIQUE", phone: "48988461120" },
+            { name: "MARCOS", phone: "48988691466" },
+            { name: "MIDIAN", phone: "48996179111" },
+            { name: "MIGUEL", phone: "3183357605" },
+            { name: "MIGUEL", phone: "3183357605" },
+            { name: "MIGUEL", phone: "3183357605" },
+            { name: "MORESCO", phone: "4999788050" },
+            { name: "MORESCO", phone: "4999788050" },
+            { name: "MORESCO", phone: "4999788050" },
+            { name: "MORESCO", phone: "4999788050" },
+            { name: "MORESCO", phone: "4999788050" },
+            { name: "RODRIGO DA POLI", phone: "3192099611" },
+            { name: "WANDERSON", phone: "4899607251" }
+        ];
+        // Process Data: Deduplicate and Clean
+        function processContacts(data) {
+            const unique = new Map();
+            data.forEach(c => {
+                // Remove non-digits
+                let cleanPhone = c.phone.replace(/\D/g, '');
+                // Keep the one with the most information if duplicates exist (though here they are identical)
+                // Use phone as key to deduplicate
+                if (!unique.has(cleanPhone)) {
+                    // Add country code if missing (Basic heuristic: if 10 or 11 digits, add 55)
+                    if (cleanPhone.length >= 10 && cleanPhone.length <= 11) {
+                        cleanPhone = '55' + cleanPhone;
+                    }
+                    unique.set(cleanPhone, {
+                        name: c.name,
+                        rawPhone: c.phone,
+                        cleanPhone: cleanPhone
+                    });
+                }
+            });
+            return Array.from(unique.values()).sort((a, b) => a.name.localeCompare(b.name));
+        }
+        const contacts = processContacts(rawContacts);
+        const contactListEl = document.getElementById('contactList');
+        const progressEl = document.getElementById('progress');
+        const messageTemplate = `Olá [ NOME ],  graça e paz tudo bem?
+Estou entrando em contato com vc, para fazer o acerto dos blocos da AÇÃO ENTRE AMIGOS, até da DATA LIMITE [ 31 de janeiro de 2026 ] de forma obrigatoria a todos. 
+* NÃO ESQUEÇAM: Assinar também a folha rosto que contem os seus dados, caso tenha ficado com algum numero precisa também preencher o canhoto com os dados pois o sorteio NÃO sera online.`;
+        let sentCount = 0;
+        function render() {
+            progressEl.textContent = `${sentCount} / ${contacts.length} Enviados`;
+            contacts.forEach((contact, index) => {
+                const row = document.createElement('div');
+                row.className = 'contact-item';
+                // Initials
+                const initials = contact.name.substring(0, 2).toUpperCase();
+                // Personalized message
+                const msg = messageTemplate.replace('[ NOME ]', contact.name);
+                const encodedMsg = encodeURIComponent(msg);
+                const whatsappUrl = `https://web.whatsapp.com/send?phone=${contact.cleanPhone}&text=${encodedMsg}`;
+                row.innerHTML = `
+                    <div class="contact-info">
+                        <div class="contact-avatar">${initials}</div>
+                        <div class="contact-details">
+                            <h3>${contact.name}</h3>
+                            <p>${contact.cleanPhone}</p>
+                        </div>
+                    </div>
+                    <a href="${whatsappUrl}" target="_blank" class="btn-send" onclick="markSent(this)">
+                        <svg width="20" height="20"><use href="#icon-send"></use></svg>
+                        Enviar
+                    </a>
+                `;
+                contactListEl.appendChild(row);
+            });
+        }
+        window.markSent = function (btn) {
+            if (!btn.classList.contains('sent')) {
+                btn.classList.add('sent');
+                btn.innerHTML = `<svg width="20" height="20"><use href="#icon-check"></use></svg> Enviado`;
+                sentCount++;
+                progressEl.textContent = `${sentCount} / ${contacts.length} Enviados`;
+            }
+        };
+        render();
+    </script>
+</body>
+</html>

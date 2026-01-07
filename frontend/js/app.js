@@ -47,33 +47,154 @@ async function init() {
     }
 }
 
-// --- Fetchers ---
+// --- Dashboard ---
+// Alias to match HTML onclick
+window.fetchDashboardData = fetchDashboard;
+
 async function fetchDashboard() {
     try {
-        const res = await fetch(`${API_URL}/dashboard?mes=${currentMonth}`);
+        const monthInput = document.getElementById('dashboard-month');
+        let mes = monthInput ? monthInput.value : null;
+
+        if (!mes) {
+            mes = new Date().toISOString().slice(0, 7);
+            if (monthInput) monthInput.value = mes;
+        }
+
+        // Logic to Lazy Generate Payments for Dashboard if they don't exist? 
+        // For now, let's assume specific month viewing implies checking status. 
+        // If we want accurate forecasting for future months without visiting billing, we might need to hit a generate endpoint.
+        // But dashboard is usually read-only. Let's start with just reading.
+        
+        const res = await fetch(`${API_URL}/dashboard?mes=${mes}`);
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
 
-        document.getElementById('total-alunos').textContent = data.alunos || 0;
-        document.getElementById('total-atrasados').textContent = data.atrasados || 0;
-        document.getElementById('total-recebido').textContent = `R$ ${parseFloat(data.recebido || 0).toFixed(2)}`;
-        document.getElementById('total-areceber').textContent = `R$ ${parseFloat(data.a_receber || 0).toFixed(2)}`;
+        const elRecebido = document.getElementById('dash-total-received');
+        if (elRecebido) elRecebido.textContent = `R$ ${parseFloat(data.recebido || 0).toFixed(2)}`;
 
-        // Isentos (New)
-        const elIsentos = document.getElementById('total-isentos');
-        if (elIsentos) elIsentos.textContent = data.isentos || 0;
+        const elPendente = document.getElementById('dash-total-pending');
+        if (elPendente) elPendente.textContent = `R$ ${parseFloat(data.a_receber || 0).toFixed(2)}`;
 
-        const list = document.getElementById('professor-stats-list');
-        if (list) {
-            list.innerHTML = (data.por_professor || []).map(p => `
-                <li>
-                    <span><i class="fa-solid fa-user-tie"></i> ${p.nome || 'Sem Professor'}</span>
-                    <span class="text-success">R$ ${parseFloat(p.total).toFixed(2)}</span>
+        const elAtrasado = document.getElementById('dash-total-late');
+        if (elAtrasado) elAtrasado.textContent = `R$ ${parseFloat(data.atrasados || 0).toFixed(2)}`;
+
+        const elStudents = document.getElementById('dash-total-students');
+        if (elStudents) elStudents.textContent = data.alunos || 0;
+
+        // Split Totals
+        const elProf = document.getElementById('dash-total-prof');
+        if (elProf) elProf.textContent = `R$ ${parseFloat(data.total_professores || 0).toFixed(2)}`;
+
+        const elIgreja = document.getElementById('dash-total-church');
+        if (elIgreja) elIgreja.textContent = `R$ ${parseFloat(data.total_igreja || 0).toFixed(2)}`;
+
+        const elExempt = document.getElementById('dash-total-exempt');
+        if (elExempt) elExempt.textContent = data.isentos || 0;
+
+        const elForecast = document.getElementById('dash-total-forecast');
+        if (elForecast) elForecast.textContent = `R$ ${parseFloat(data.previsao_total || 0).toFixed(2)}`;
+
+        // Update lists
+        const upcomingList = document.getElementById('upcoming-list');
+        if (upcomingList) {
+            upcomingList.innerHTML = (data.proximos_vencimentos || []).map(p => `
+                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span>${p.nome}</span>
+                    <span style="color: #60a5fa;">${p.vencimento}</span>
                 </li>
-            `).join('');
+            `).join('') || '<li style="color: #94a3b8; text-align: center;">Nenhum vencimento próximo</li>';
+        }
+
+        const lateList = document.getElementById('late-list');
+        if (lateList) {
+            lateList.innerHTML = (data.atrasos_recentes || []).map(a => `
+                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span>${a.nome}</span>
+                    <span style="color: #f87171;">${a.dias_atraso} dias</span>
+                </li>
+            `).join('') || '<li style="color: #94a3b8; text-align: center;">Nenhum atraso</li>';
+        }
+
+
+        // Professor Revenue Breakdown
+        const profRevenueList = document.getElementById('professor-revenue-list');
+        if (profRevenueList) {
+            profRevenueList.innerHTML = (data.por_professor || []).map(p => `
+                <li style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f1f5f9; font-size: 1rem;">
+                        <i class="fa-solid fa-chalkboard-user" style="color: #10b981;"></i>
+                        <span>${p.nome || 'Sem Professor'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 20px; padding-left: 28px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 2px;">Professor Recebe</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; color: #10b981;">R$ ${parseFloat(p.total_professor || 0).toFixed(2)}</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 2px;">Igreja Recebe</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; color: #8b5cf6;">R$ ${parseFloat(p.total_igreja || 0).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </li>
+            `).join('') || '<li style="color: #94a3b8; text-align: center; padding: 20px;">Nenhum pagamento recebido este mês</li>';
         }
     } catch (e) { console.error("Dashboard error:", e); }
 }
+
+window.changeDashboardMonth = (offset) => {
+    const input = document.getElementById('dashboard-month');
+    if (!input || !input.value) return;
+
+    // input.value is "YYYY-MM"
+    const [year, month] = input.value.split('-').map(Number);
+    // Create date for 1st of that month (Use local or UTC? Local is fine for month arithmetic usually if middle of day used, 
+    // but strict YYYY-MM math is safer)
+    
+    // Math way:
+    let newMonth = month + offset;
+    let newYear = year;
+
+    while (newMonth > 12) {
+        newMonth -= 12;
+        newYear++;
+    }
+    while (newMonth < 1) {
+        newMonth += 12;
+        newYear--;
+    }
+
+    const fmtMonth = String(newMonth).padStart(2, '0');
+    input.value = `${newYear}-${fmtMonth}`;
+    
+    fetchDashboardData();
+};
+
+window.changeBillingMonth = (offset) => {
+    const input = document.getElementById('billing-month');
+    if (!input || !input.value) return;
+
+    // input.value is "YYYY-MM"
+    const [year, month] = input.value.split('-').map(Number);
+    
+    // Math way:
+    let newMonth = month + offset;
+    let newYear = year;
+
+    while (newMonth > 12) {
+        newMonth -= 12;
+        newYear++;
+    }
+    while (newMonth < 1) {
+        newMonth += 12;
+        newYear--;
+    }
+
+    const fmtMonth = String(newMonth).padStart(2, '0');
+    input.value = `${newYear}-${fmtMonth}`;
+    
+    fetchBilling();
+};
 
 async function fetchResources() {
     try {
@@ -211,15 +332,19 @@ function renderManagementLists() {
 }
 
 function updateFormSelects() {
-    const profSelect = document.getElementById('client-professor');
-    const courseSelect = document.getElementById('client-course');
+    const profSelect = document.getElementById('matricula-professor');
+    const courseSelect = document.getElementById('matricula-course');
 
-    // Keep first option
-    profSelect.innerHTML = '<option value="">Selecione...</option>' +
-        professors.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    // Populate Matricula Modal Selects
+    if (profSelect) {
+        profSelect.innerHTML = '<option value="">Selecione...</option>' +
+            professors.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    }
 
-    courseSelect.innerHTML = '<option value="">Selecione...</option>' +
-        courses.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    if (courseSelect) {
+        courseSelect.innerHTML = '<option value="">Selecione...</option>' +
+            courses.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    }
 }
 
 // ... Client Render ...
@@ -271,11 +396,11 @@ function renderClients() {
                 </div>
 
                 <div class="cell-info tag-cell">
-                    <span class="tag-pill">${c.nome_curso || '-'}</span>
+                    <span class="tag-pill">${c.cursos_nomes || '-'}</span>
                 </div>
 
                 <div class="cell-info">
-                    <span class="value-highlight">R$ ${parseFloat(c.valor_padrao).toFixed(2)}</span>
+                    <span class="value-highlight">R$ ${parseFloat(c.total_valor || 0).toFixed(2)}</span>
                 </div>
 
                 <div class="cell-actions">
@@ -392,47 +517,80 @@ window.editClient = (id) => {
     const client = clients.find(c => c.id === id);
     if (!client) return;
 
+    // Set editing ID BEFORE opening modal so the modal logic can enable the button
     editingClientId = id;
 
-    // Populate Form
-    document.getElementById('client-name').value = client.nome;
-    document.getElementById('client-address').value = client.endereco;
-    document.getElementById('client-phone').value = client.whatsapp;
-    document.getElementById('client-value').value = client.valor_padrao;
-    document.getElementById('client-due-day').value = client.dia_vencimento;
-    document.getElementById('client-professor').value = client.professor_id || '';
-    document.getElementById('client-course').value = client.curso_id || '';
-
-    // Open Modal via global helper
+    // Open Modal via global helper - this will enable the matricula button
     if (window.openClientModal) window.openClientModal('Editar Cliente');
+
+    // Populate fields with client data
+    document.getElementById('client-name').value = client.nome || '';
+    document.getElementById('client-address').value = client.endereco || '';
+    document.getElementById('client-phone').value = client.whatsapp || '';
+    
+    // Note: Legacy financial fields (due day, standard value) are now handled via Matriculas
+    // and do not exist in the main client form anymore.
 
     // Show actions
     document.getElementById('btn-pause-client').style.display = 'flex';
     document.getElementById('btn-delete-client').style.display = 'flex';
-    document.getElementById('btn-apply-to-pending').style.display = 'flex';
 
-    // Store original values for change detection
-    window.originalClientValues = {
-        valor: client.valor_padrao,
-        prof: client.professor_id,
-        curso: client.curso_id,
-        valor_prof: document.getElementById('client-valor-professor').value // Get from input as it might be calculated/default
-    };
+    // Load matriculas for this client
+    if (typeof renderMatriculasList === 'function') {
+        renderMatriculasList(id);
+    }
+
+    // Store original values (Legacy: kept for reference if needed, but logic moved to matriculas)
+    window.originalClientValues = {};
 };
 
 window.openClientModal = (title) => {
     // Helper to reset and open
     const modal = document.getElementById('client-modal');
-    document.querySelector('#client-modal h3').innerText = title || 'Novo Cliente';
+    const header = document.querySelector('#client-modal h3');
+    if (header) header.innerText = title || 'Novo Cliente';
+
+    // Handle Matricula/Enrollment Logic
+    const btnAddMatricula = document.getElementById('btn-open-matricula-modal');
+    const listContainer = document.getElementById('enrollments-list');
 
     if (title === 'Cadastrar Novo Cliente') {
         // Reset form if new
         document.getElementById('form-client').reset();
         editingClientId = null;
+        
+        // Hide Actions
         document.getElementById('btn-pause-client').style.display = 'none';
         document.getElementById('btn-delete-client').style.display = 'none';
-        document.getElementById('btn-apply-to-pending').style.display = 'none';
+        
+        // Disable Matricula Adding
+        if (btnAddMatricula) {
+            btnAddMatricula.disabled = true;
+            btnAddMatricula.style.opacity = '0.5';
+            btnAddMatricula.style.cursor = 'not-allowed';
+            // Show the warning text
+            const warningSpan = btnAddMatricula.querySelector('span');
+            if (warningSpan) warningSpan.style.display = 'inline';
+        }
+        if (listContainer) {
+            listContainer.innerHTML = '<div style="text-align: center; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; color: #94a3b8;">Salve o cliente primeiro para adicionar matrículas.</div>';
+        }
+
         window.originalClientValues = null;
+    } else {
+        // Editing Mode
+        if (btnAddMatricula) {
+            btnAddMatricula.disabled = false;
+            btnAddMatricula.style.opacity = '1';
+            btnAddMatricula.style.cursor = 'pointer';
+            // Hide the warning text in edit mode
+            const warningSpan = btnAddMatricula.querySelector('span');
+            if (warningSpan) warningSpan.style.display = 'none';
+        }
+        // Load Enrollments
+        if (typeof renderMatriculasList === 'function' && editingClientId) {
+            renderMatriculasList(editingClientId);
+        }
     }
 
     modal.classList.remove('hidden');
@@ -455,6 +613,16 @@ window.toggleClientStatus = async (id, status) => {
     fetchDashboard();
 };
 
+document.getElementById('client-search').addEventListener('input', (e) => {
+    filterClients(e.target.value);
+});
+
+// Dashboard Filter
+const dashboardFilter = document.getElementById('dashboard-month-filter');
+if (dashboardFilter) {
+    dashboardFilter.addEventListener('change', () => fetchDashboard());
+}
+
 // Submit Form
 document.getElementById('form-client').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -463,12 +631,14 @@ document.getElementById('form-client').addEventListener('submit', async (e) => {
         nome: document.getElementById('client-name').value,
         endereco: document.getElementById('client-address').value,
         whatsapp: document.getElementById('client-phone').value,
-        valor_padrao: parseFloat(document.getElementById('client-value').value),
-        dia_vencimento: parseInt(document.getElementById('client-due-day').value) || 10,
-        professor_id: document.getElementById('client-professor').value || null,
-        curso_id: document.getElementById('client-course').value || null,
-        valor_professor: parseFloat(document.getElementById('client-valor-professor').value) || 0,
-        valor_igreja: parseFloat(document.getElementById('client-valor-igreja').value) || 0
+        // Legacy fields - sending defaults to satisfy backend if needed, 
+        // but real data is now in Matriculas
+        valor_padrao: 0,
+        dia_vencimento: 10,
+        professor_id: null,
+        curso_id: null,
+        valor_professor: 0,
+        valor_igreja: 0
     };
 
     try {
@@ -490,10 +660,8 @@ document.getElementById('form-client').addEventListener('submit', async (e) => {
         }
 
         if (response.ok) {
-
-            // Check for revenue changes to prompt for bulk update
-            const newValor = parseFloat(clientData.valor_padrao);
-            const newValorProf = parseFloat(document.getElementById('client-valor-professor').value || 0);
+            // Toast logic simplified (removed revenue check since fields are gone)
+            showToast(editingClientId ? 'Cliente atualizado!' : 'Cliente cadastrado!');
 
             // Capture ID locally to avoid race conditions with global state
             const targetId = editingClientId;
@@ -525,9 +693,16 @@ document.getElementById('form-client').addEventListener('submit', async (e) => {
             // Use targetId for toast message logic as well, or keep as is (since it runs immediately)
             showToast(targetId ? 'Cliente atualizado!' : 'Cliente cadastrado!');
 
-            // Close modal by clicking the cancel button (which triggers the generic close)
-            const btnClose = document.getElementById('btn-cancel-client-modal');
-            if (btnClose) btnClose.click();
+            // Explicitly close modal
+            const modal = document.getElementById('client-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none'; // Force hide
+            }
+            editingClientId = null; // Clear ID
+
+            // Reset form
+            document.getElementById('form-client').reset();
 
             await fetchClients();
             fetchDashboard();
@@ -535,11 +710,13 @@ document.getElementById('form-client').addEventListener('submit', async (e) => {
             showToast('Erro ao salvar.', true);
         }
     } catch (error) {
+        console.error(error);
         showToast('Erro de conexão', true);
     }
 });
 function renderBillingTable(data = billingData) {
     const tbody = document.getElementById('billing-list');
+    if (!tbody) return; // Exit if element doesn't exist
     tbody.innerHTML = '';
 
     data.forEach(item => {
@@ -551,11 +728,16 @@ function renderBillingTable(data = billingData) {
         const valorTotal = parseFloat(item.valor_cobrado) || 0;
         const valorProf = item.valor_professor_recebido !== null ? parseFloat(item.valor_professor_recebido) : Math.min(100, valorTotal);
         const valorIgreja = item.valor_igreja_recebido !== null ? parseFloat(item.valor_igreja_recebido) : (valorTotal - valorProf);
+        
+        const valColor = valorTotal <= 0 ? '#ef4444' : '#ffffff';
 
         tbody.innerHTML += `
             <tr>
                 <td>
-                    <strong style="font-size: 1rem; color: #f1f5f9;">${item.nome}</strong><br>
+                    <strong style="font-size: 1rem; color: #f1f5f9;">
+                        ${item.nome} 
+                        ${item.nome_curso ? `<span style="font-size: 0.8em; color: #94a3b8; font-weight: 400;">(${item.nome_curso})</span>` : ''}
+                    </strong><br>
                     <small class="text-muted">${item.nome_professor || '-'}</small>
                 </td>
                 <td>
@@ -569,6 +751,7 @@ function renderBillingTable(data = billingData) {
                         <span>R$</span>
                         <input type="number" 
                                class="input-clean"
+                               style="color: ${valColor};"
                                value="${parseFloat(item.valor_cobrado).toFixed(2)}"
                                step="0.01"
                                onblur="this.value = parseFloat(this.value).toFixed(2)"
@@ -581,6 +764,7 @@ function renderBillingTable(data = billingData) {
                         <span>R$</span>
                         <input type="number" 
                                class="input-clean"
+                               id="prof-val-${item.id}"
                                value="${valorProf.toFixed(2)}"
                                step="0.01"
                                onblur="this.value = parseFloat(this.value).toFixed(2)"
@@ -603,16 +787,26 @@ function renderBillingTable(data = billingData) {
                 </td>
                 <td>
                     <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
-                        <!-- Action Trio -->
-                        <button class="btn-icon-action" onclick="sendWhatsappDirect(${item.id}, 'lembrete')" title="Lembrete" style="color: #60a5fa;">
-                            <i class="fa-regular fa-calendar"></i>
-                        </button>
-                        <button class="btn-icon-action" onclick="sendWhatsappDirect(${item.id}, 'vence_hoje')" title="Vence Hoje" style="color: #fbbf24;">
-                            <i class="fa-solid fa-bell"></i>
-                        </button>
-                        <button class="btn-icon-action" onclick="sendWhatsappDirect(${item.id}, 'em_atraso')" title="Em Atraso" style="color: #f87171;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </button>
+                        <!-- Action Trio (Merged Buttons) -->
+                        <div class="status-actions" style="display:flex; gap:8px;">
+                            <div class="msg-check ${item.msg_lembrete_enviada ? 'checked' : ''} check-lembrete" 
+                                 onclick="handleActionClick(${item.id}, 'lembrete', ${!!item.msg_lembrete_enviada})"
+                                 title="Lembrete">
+                                <i class="fa-regular fa-calendar"></i>
+                            </div>
+                            
+                            <div class="msg-check ${item.msg_vencimento_enviada ? 'checked' : ''} check-hoje" 
+                                 onclick="handleActionClick(${item.id}, 'vence_hoje', ${!!item.msg_vencimento_enviada})"
+                                 title="Vence Hoje">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+                            
+                            <div class="msg-check ${item.msg_atraso_enviada ? 'checked' : ''} check-atraso" 
+                                 onclick="handleActionClick(${item.id}, 'em_atraso', ${!!item.msg_atraso_enviada})"
+                                 title="Atraso">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
                         
                         <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
 
@@ -638,12 +832,17 @@ window.updatePayment = async (id, field, value) => {
             body: JSON.stringify({ [field]: value })
         });
         showToast('Atualizado!');
-        // Refresh depends on context. For now, simple refresh of data.
-        // Optimization: Update local array and re-render row to avoid full fetch.
-        // For safety/simplicity:
-        if (field === 'status' || field === 'data_pagamento') {
-            fetchDashboard();
-            fetchBilling();
+        // Refresh triggers
+        const refreshFields = [
+            'status', 'data_pagamento', 'valor_cobrado', 
+            'valor_professor_recebido', 'valor_igreja_recebido',
+            'msg_lembrete_enviada', 'msg_vencimento_enviada', 'msg_atraso_enviada'
+        ];
+        
+        if (refreshFields.includes(field)) {
+            // For message status, we only strictly need billing, but dashboard is safe too
+            fetchBilling(); 
+            if (!field.startsWith('msg_')) fetchDashboard();
         }
     } catch (e) {
         console.error(e);
@@ -687,67 +886,173 @@ window.togglePaymentStatus = (id, currentStatus) => {
         : 'Atenção! Isso removerá o status de pagamento. Deseja continuar?';
 
     window.openConfirmModal(title, message, async () => {
-        if (isPaying) {
-            const today = new Date().toISOString().split('T')[0];
-            await window.updatePayment(id, 'data_pagamento', today);
-        } else {
-            await window.updatePayment(id, 'data_pagamento', null);
+        try {
+            const payload = { status: newStatus };
+
+            if (isPaying) {
+                const today = new Date().toISOString().split('T')[0];
+                payload.data_pagamento = today;
+
+                // Capture current split values from UI to save them definitively
+                const profInput = document.getElementById(`prof-val-${id}`);
+                const churchInput = document.getElementById(`igreja-${id}`);
+                
+                if (profInput && churchInput) {
+                    payload.valor_professor_recebido = parseFloat(profInput.value) || 0;
+                    payload.valor_igreja_recebido = parseFloat(churchInput.value) || 0;
+                }
+            } else {
+                payload.data_pagamento = null;
+                // Optional: clear split values when unpaying? Or keep them?
+                // Keeping them is safer for history, but maybe NULLing them is cleaner?
+                // Left alone for now (they stay in DB but status is NOT PAGO so they are ignored by dashboard query)
+            }
+
+            const res = await fetch(`${API_URL}/pagamentos/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showToast(isPaying ? 'Pagamento confirmado!' : 'Pagamento desfeito!');
+                fetchBilling(); 
+                fetchDashboard();
+            } else {
+                showToast('Erro ao atualizar status', true);
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Erro de conexão', true);
         }
-        await window.updatePayment(id, 'status', newStatus);
-        fetchBilling(); // Refresh UI
     });
 };
 
-// WhatsApp Direct Send (No Modal)
+// Toggle Message Status Manually
+window.toggleMsgStatus = async (id, field, value) => {
+    // Prevent event bubbling if necessary (though divs are separate)
+    await window.updatePayment(id, field, value);
+    // UI update is handled by updatePayment calling fetchBilling
+};
+
+// Smart Action Handler
+window.handleActionClick = (id, type, isChecked) => {
+    if (isChecked) {
+        // If checked, toggle OFF
+        let field = null;
+        if (type === 'lembrete') field = 'msg_lembrete_enviada';
+        if (type === 'vence_hoje') field = 'msg_vencimento_enviada';
+        if (type === 'em_atraso') field = 'msg_atraso_enviada';
+        
+        if (field) {
+            // Also sync siblings? User didn't strictly say uncheck all, but implied behavior consistency.
+            // Let's uncheck ONLY this one for safety, or use the bulk logic if we want to keep them in sync.
+            // Given "Daniela" case, we probably want to uncheck all if we check all.
+            // Let's try single uncheck first to avoid accidents, or bulk?
+            // "todos eles mesmo com um curso acontece o mesmo DA BORDA COLORIDA" implies visual sync.
+             window.toggleMsgStatus(id, field, false);
+        }
+    } else {
+        // If unchecked, Send Message (Start Flow)
+        window.sendWhatsappDirect(id, type);
+    }
+};
+
+// WhatsApp Direct Send (With Aggregation & Preview)
+// WhatsApp Direct Send (With Aggregation & Preview)
 window.sendWhatsappDirect = async (id, type) => {
     try {
-        showToast('Carregando mensagem...', false);
-
         const item = billingData.find(i => i.id === id);
         if (!item) {
             showToast('Erro: Cliente não encontrado', true);
             return;
         }
 
-        // Load template
-        const response = await fetch(`${API_URL}/templates/${type}`);
-        if (!response.ok) throw new Error('Template não encontrado');
-        let template = await response.text();
+        // --- Aggregation Logic (Calculate First) ---
+        // Find other unpaid items for this client in the same month/view
+        const sameClientItems = billingData.filter(i => 
+            i.cliente_id === item.cliente_id && 
+            i.status !== 'PAGO' && 
+            i.data_vencimento.slice(0, 7) === item.data_vencimento.slice(0, 7) // Same YYYY-MM
+        );
 
-        // Calculate days late
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const [y, m, d] = item.data_vencimento.split('T')[0].split('-');
-        const dueDate = new Date(y, m - 1, d);
-        const diffDays = Math.max(0, Math.round((today - dueDate) / (1000 * 60 * 60 * 24)));
+        // Auto-mark key (Bulk Update)
+        let fieldToUpdate = null;
+        if (type === 'lembrete') fieldToUpdate = 'msg_lembrete_enviada';
+        if (type === 'vence_hoje') fieldToUpdate = 'msg_vencimento_enviada';
+        if (type === 'em_atraso') fieldToUpdate = 'msg_atraso_enviada';
 
-        // Replace variables
+        if (fieldToUpdate) {
+             // Update ALL siblings silently in background
+             const updatePromises = sameClientItems.map(sibling => 
+                fetch(`${API_URL}/pagamentos/${sibling.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [fieldToUpdate]: true })
+                })
+             );
+
+             Promise.all(updatePromises).then(() => {
+                console.log('Bulk message status auto-updated');
+                setTimeout(fetchBilling, 2000); 
+            });
+        }
+
         const nome = item.nome.split(' ')[0];
-        const valor = parseFloat(item.valor_cobrado || 0).toFixed(2).replace('.', ',');
         const vencimento = formatDate(item.data_vencimento);
         const pixChave = '47773105000147';
         const pixCopiaCola = '00020126360014BR.GOV.BCB.PIX0114477731050001475204000053039865802BR5901N6001C62090505Aulas63043954';
 
-        template = template
-            .replace(/\{\{nome\}\}/g, nome)
-            .replace(/\{\{valor\}\}/g, valor)
-            .replace(/\{\{vencimento\}\}/g, vencimento)
-            .replace(/\{\{dias_atraso\}\}/g, diffDays)
-            .replace(/\{\{pix_chave\}\}/g, pixChave)
-            .replace(/\{\{pix_copia_cola\}\}/g, pixCopiaCola);
+        // --- Unified List Construction (Always use List) ---
+        let total = 0;
+        let coursesList = '*Cursos:*\n';
+        
+        sameClientItems.forEach(i => {
+            const val = parseFloat(i.valor_cobrado || 0);
+            total += val;
+            const cName = i.nome_curso || 'Curso';
+            coursesList += `${cName} - R$ ${val.toFixed(2).replace('.', ',')}\n`;
+        });
+        const totalFormatted = total.toFixed(2).replace('.', ',');
 
-        // Clean phone number
+        let statusText = '';
+        if (type === 'atraso') {
+            statusText = `constam pendentes em nosso sistema.`;
+        } else if (type === 'vence_hoje') {
+            statusText = `vencem *HOJE* (${vencimento}).`;
+        } else {
+            // Lembrete
+            statusText = `vencem dia *${vencimento}*.\nCaso já tenha efetuado o pagamento, desconsidere.`;
+        }
+        
+        const msg = `Oi ${nome}, tudo bem? Graça e paz!
+Mauricio aqui :-)
+
+Passando para te lembrar das suas mensalidades:
+
+${coursesList}
+*Total - R$ ${totalFormatted}*
+
+${statusText}
+
+Sempre adicionar a chave pix, e uma atenção:
+Enviar comprovante de pagamento assim que fizer o pagamento.
+
+Chave Pix: ${pixChave}
+
+Pix Copia-e-cola:
+${pixCopiaCola}`;
+
+        // Direct Open (No Modal as requested)
         let phone = (item.whatsapp || '').replace(/\D/g, '');
         if (!phone.startsWith('55') && phone.length > 9) phone = '55' + phone;
-
-        // Open WhatsApp
-        const url = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(template)}`;
+        const url = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
 
         showToast('Abrindo WhatsApp...', false);
     } catch (error) {
         console.error('Erro ao enviar WhatsApp:', error);
-        showToast('Erro ao carregar template: ' + error.message, true);
+        showToast('Erro ao gerar mensagem: ' + error.message, true);
     }
 };
 
@@ -896,14 +1201,8 @@ function setupEventListeners() {
         }
     );
 
-    // Expose open for global edit function
-    window.openClientModal = (title) => {
-        const modal = document.getElementById('client-modal');
-        if (modal) {
-            modal.querySelector('h3').textContent = title || 'Cadastrar Novo Cliente';
-            clientModalCtrl.open();
-        }
-    };
+    // Note: window.openClientModal is defined earlier in the file (around line 483)
+    // with full matricula/enrollment logic. Do not redefine it here.
 
     // Initialize WhatsApp Modal
     setupModal(
@@ -912,6 +1211,43 @@ function setupEventListeners() {
         'btn-close-modal', // Corrected ID from HTML
         null
     );
+
+    // Initialize Matricula Modal
+    const matriculaModalCtrl = setupModal(
+        'matricula-modal',
+        'btn-open-matricula-modal',
+        'btn-close-matricula-modal',
+        'btn-cancel-matricula-modal',
+        () => {
+            // onOpen: Reset for new enrollment
+            document.getElementById('form-matricula').reset();
+            document.getElementById('matricula-id').value = '';
+            
+            // Set title to "Vincular Curso" for new enrollment
+            const modalTitle = document.querySelector('#matricula-modal h3');
+            if (modalTitle) modalTitle.textContent = 'Vincular Curso';
+            
+            // Remove inline display style to allow modal to show
+            const modal = document.getElementById('matricula-modal');
+            modal.style.display = 'flex';
+            
+            // Check if we have a client context
+            if (!editingClientId) {
+                showToast('Erro: Cliente não identificado', true);
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
+        },
+        () => {
+            // onClose: Clean up
+            document.getElementById('form-matricula').reset();
+            document.getElementById('matricula-id').value = '';
+            const modal = document.getElementById('matricula-modal');
+            modal.style.display = 'none'; // Ensure inline style is removed
+        }
+    );
+
+
 
     // --- Modal Listeners (WhatsApp Specifics) ---
     // Safely attach listener, removing old one if exists (to prevent duplicates if init runs twice)
@@ -1029,6 +1365,52 @@ function setupEventListeners() {
         });
     }
 
+    // --- Course Selection Logic (Matricula Modal) ---
+    const matCourseSelect = document.getElementById('matricula-course');
+    if (matCourseSelect) {
+        matCourseSelect.addEventListener('change', (e) => {
+            const courseId = parseInt(e.target.value);
+            if (!courseId) return;
+
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                // Auto-fill value
+                document.getElementById('matricula-value').value = parseFloat(course.mensalidade_padrao).toFixed(2);
+                
+                // Trigger recalc of revenue split (Matricula specific)
+                calculateMatriculaSplit();
+            }
+        });
+    }
+
+    // Auto-calc split on value change
+    const matValueInput = document.getElementById('matricula-value');
+    if (matValueInput) {
+        matValueInput.addEventListener('change', calculateMatriculaSplit);
+    }
+    const matProfValueInput = document.getElementById('matricula-valor-professor');
+    if (matProfValueInput) {
+        matProfValueInput.addEventListener('change', calculateMatriculaSplit);
+    }
+
+    // --- Course Selection Logic ---
+    const clientCourseSelect = document.getElementById('client-course');
+    if (clientCourseSelect) {
+        clientCourseSelect.addEventListener('change', (e) => {
+            const courseId = parseInt(e.target.value);
+            if (!courseId) return;
+
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                // Auto-fill value
+                document.getElementById('client-value').value = parseFloat(course.mensalidade_padrao).toFixed(2);
+                
+                // Trigger recalc of revenue split
+                calculateRevenueSplit();
+            }
+        });
+    }
+
     // --- Navigation & Filters ---
     const monthInput = document.getElementById('billing-month');
     if (monthInput) {
@@ -1062,6 +1444,17 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Add click handlers for sidebar navigation
+    document.querySelectorAll('.sidebar a[data-target]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = link.getAttribute('data-target');
+            if (target) {
+                window.location.hash = '#' + target;
+            }
+        });
+    });
 
     // Hash Change Listener
     window.addEventListener('hashchange', handleRouting);
@@ -1389,16 +1782,7 @@ function renderFilteredInactiveClients(filteredClients) {
 
 // Calculate revenue split automatically
 window.calculateRevenueSplit = () => {
-    const totalValue = parseFloat(document.getElementById('client-value').value) || 0;
-    const professorValue = document.getElementById('client-valor-professor');
-    const churchValue = document.getElementById('client-valor-igreja');
-
-    // If professor value is empty, suggest 100 or total (whichever is smaller)
-    if (!professorValue.value || parseFloat(professorValue.value) === 0) {
-        const suggested = Math.min(100, totalValue);
-        professorValue.value = suggested.toFixed(2);
-    }
-
+    // Just trigger the church portion calculation based on current values
     calculateChurchPortion();
 };
 
@@ -1408,15 +1792,16 @@ window.calculateChurchPortion = () => {
     const churchValue = document.getElementById('client-valor-igreja');
 
     const churchPortion = totalValue - professorValue;
+    churchValue.value = churchPortion.toFixed(2);
 
     if (churchPortion < 0) {
-        showToast('Valor do professor não pode ser maior que o total!', true);
-        document.getElementById('client-valor-professor').value = totalValue.toFixed(2);
-        churchValue.value = '0.00';
+        // Optional: warn user but don't force reset immediately to allow typing
+        churchValue.style.color = '#ef4444'; // Red
     } else {
-        churchValue.value = churchPortion.toFixed(2);
+        churchValue.style.color = 'inherit';
     }
 };
+
 
 // Update revenue split for a payment
 window.updateRevenueSplit = async (paymentId, field, value, totalValue) => {
@@ -1462,6 +1847,27 @@ window.updateRevenueSplit = async (paymentId, field, value, totalValue) => {
         console.error('Error updating revenue split:', err);
         showToast('Erro ao salvar divisão', true);
     }
+};
+
+// Change Dashboard Month
+window.changeMonth = (delta) => {
+    const input = document.getElementById('dashboard-month-filter');
+    if (!input.value) return;
+
+    // Parse current YYYY-MM
+    const [year, month] = input.value.split('-').map(Number);
+
+    // Create date (day 1 to avoid overflow issues)
+    const date = new Date(year, month - 1 + delta, 1);
+
+    // Format back to YYYY-MM
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+
+    input.value = `${newYear}-${newMonth}`;
+
+    // Trigger refresh
+    fetchDashboard();
 };
 
 // Show pause/delete buttons when editing a client
@@ -1584,4 +1990,163 @@ window.toggleApplyButton = (clientId) => {
     } else if (applyBtn) {
         applyBtn.style.display = 'none';
     }
+};
+
+// --- MULTI-MATRICULA MANAGEMENT ---
+
+window.renderMatriculasList = async (clientId) => {
+    const list = document.getElementById('enrollments-list');
+    if (!list) return;
+    
+    list.innerHTML = '<div style="text-align: center; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/matriculas/${clientId}`);
+        const matriculas = await res.json();
+
+        if (matriculas.length === 0) {
+            list.innerHTML = '<div style="text-align: center; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; color: #94a3b8;">Nenhum curso vinculado.</div>';
+            return;
+        }
+
+        list.innerHTML = matriculas.map(m => `
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <div style="font-weight: 600; color: white;">${m.nome_curso || 'Curso desconhecido'}</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">Prof. ${m.nome_professor || 'N/A'}</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem;">
+                        Venc: Dia ${m.dia_vencimento} • <span style="color: #4ade80;">R$ ${parseFloat(m.valor_mensalidade).toFixed(2)}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" class="btn-icon-small" onclick='editMatricula(${JSON.stringify(m).replace(/'/g, "&#39;")})' title="Editar">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button type="button" class="btn-icon-small text-danger" onclick="deleteMatricula(${m.id})" title="Remover">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = '<div style="color: #ef4444; text-align: center;">Erro ao carregar matrículas.</div>';
+    }
+};
+
+window.calculateMatriculaSplit = () => {
+    const total = parseFloat(document.getElementById('matricula-value').value) || 0;
+    const prof = parseFloat(document.getElementById('matricula-valor-professor').value) || 0;
+    const churchInput = document.getElementById('matricula-valor-igreja');
+
+    const church = total - prof;
+    churchInput.value = church.toFixed(2);
+    
+    if (church < 0) churchInput.style.color = '#ef4444';
+    else churchInput.style.color = 'inherit';
+};
+
+window.handleMatriculaSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingClientId) return;
+
+    const id = document.getElementById('matricula-id').value;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_URL}/matriculas/${id}` : `${API_URL}/matriculas`;
+
+    const valorMensalidade = document.getElementById('matricula-value').value;
+    const diaVencimento = document.getElementById('matricula-due-day').value;
+    const valorProfessor = document.getElementById('matricula-valor-professor').value;
+    const valorIgreja = document.getElementById('matricula-valor-igreja').value;
+
+    if (!valorMensalidade || !diaVencimento || !valorProfessor || !valorIgreja) {
+        showToast('Preencha todos os campos financeiros!', true);
+        return;
+    }
+
+    const body = {
+        cliente_id: editingClientId,
+        curso_id: document.getElementById('matricula-course').value,
+        professor_id: document.getElementById('matricula-professor').value,
+        dia_vencimento: parseInt(diaVencimento),
+        valor_mensalidade: parseFloat(valorMensalidade),
+        valor_professor: parseFloat(valorProfessor),
+        valor_igreja: parseFloat(valorIgreja)
+    };
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            showToast('Vínculo salvo com sucesso!');
+            const modal = document.getElementById('matricula-modal');
+            modal.classList.add('hidden');
+            modal.style.display = 'none'; // Fix: Remove inline style
+            renderMatriculasList(editingClientId); // Refresh List
+            fetchClients(); // Refresh Client List (Dashboard)
+            // Ideally trigger billing refresh if needed
+        } else {
+            showToast('Erro ao salvar vínculo.', true);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Erro de conexão.', true);
+    }
+};
+
+window.editMatricula = (m) => {
+    // Populate Modal
+    document.getElementById('matricula-id').value = m.id;
+    document.getElementById('matricula-course').value = m.curso_id;
+    document.getElementById('matricula-professor').value = m.professor_id;
+    document.getElementById('matricula-due-day').value = m.dia_vencimento;
+    document.getElementById('matricula-value').value = m.valor_mensalidade;
+    document.getElementById('matricula-valor-professor').value = m.valor_professor;
+    document.getElementById('matricula-valor-igreja').value = m.valor_igreja;
+    
+    document.querySelector('#matricula-modal h3').innerText = 'Editar Matrícula';
+    
+    // Open Modal
+    const modal = document.getElementById('matricula-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+window.deleteMatricula = async (id) => {
+    if (!confirm('Remover este curso do aluno?')) return;
+    try {
+        await fetch(`${API_URL}/matriculas/${id}`, { method: 'DELETE' });
+        renderMatriculasList(editingClientId);
+        fetchClients();
+        fetchBilling(); // Refresh billing to remove unpaid items
+        showToast('Curso excluído.');
+    } catch (err) {
+        console.error(err);
+        showToast('Erro ao excluir.', true);
+    }
+};
+
+// --- Combined Search & Filter for Billing ---
+window.filterBilling = () => {
+    const statusFilter = document.getElementById('billing-status-filter').value;
+    const searchTerm = document.getElementById('billing-search').value.toLowerCase().trim();
+
+    const filtered = billingData.filter(item => {
+        // Status Check
+        const statusMatch = (statusFilter === 'all') || (item.status === statusFilter);
+
+        // Search Check (Name or Course)
+        const name = (item.nome || '').toLowerCase();
+        const course = (item.nome_curso || '').toLowerCase();
+        const searchMatch = !searchTerm || name.includes(searchTerm) || course.includes(searchTerm);
+
+        return statusMatch && searchMatch;
+    });
+
+    renderBillingTable(filtered);
 };

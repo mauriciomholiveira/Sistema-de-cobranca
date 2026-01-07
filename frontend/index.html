@@ -5,111 +5,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Cobrança Premium</title>
-    <!-- Google Fonts -->
+    <!-- Modern Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css?v=5">
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-</head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-
     <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <!-- Sidebar -->
+        <aside class="sidebar">
             <div class="brand">
-                <i class="fa-solid fa-gem"></i>
-                <span>PremiumSys</span>
+                <i class="fa-solid fa-layer-group"></i> PremiumSys
             </div>
-
             <ul class="nav-links">
-                <li>
-                    <a href="#dashboard-section" data-target="dashboard-section" class="active">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#clients-section" data-target="clients-section">
-                        <i class="fa-solid fa-users"></i>
-                        <span>Clientes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#billing-section" data-target="billing-section">
-                        <i class="fa-solid fa-money-bill-wave"></i>
-                        <span>Cobrança</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#management-section" data-target="management-section">
-                        <i class="fa-solid fa-gear"></i>
-                        <span>Gestão</span>
-                    </a>
-                </li>
+                <li><a data-target="dashboard-section" class="active"><i class="fa-solid fa-chart-line"></i>
+                        Dashboard</a></li>
+                <li><a data-target="billing-section"><i class="fa-solid fa-file-invoice-dollar"></i> Cobrança</a></li>
+                <li><a data-target="clients-section"><i class="fa-solid fa-users"></i> Clientes</a></li>
+                <li><a data-target="management-section"><i class="fa-solid fa-list-check"></i> Gestão</a></li>
             </ul>
-        </nav>
+        </aside>
 
-        <!-- Main Content Area -->
+        <!-- Main Content -->
         <main class="content">
 
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="tab-content active">
                 <header class="section-header">
                     <div>
-                        <h1>Visão Geral</h1>
-                        <p>Acompanhe o desempenho da sua escola</p>
+                        <h1>Dashboard</h1>
+                        <p>Visão geral financeira</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn-icon" onclick="changeDashboardMonth(-1)" style="width: 36px; height: 38px;">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <input type="month" id="dashboard-month" class="input-dark" onchange="fetchDashboardData()">
+                        <button class="btn-icon" onclick="changeDashboardMonth(1)" style="width: 36px; height: 38px;">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
                     </div>
                 </header>
 
-                <div class="grid-container stats-grid">
+                <div class="stats-grid grid-container">
                     <div class="card stat-card">
-                        <div class="icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="icon-box bg-blue">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <h4 id="dash-month-title">Mês atual</h4>
+                            <h2 id="dash-total-received">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-yellow">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <h4>Pendente</h4>
+                            <h2 id="dash-total-pending">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-red">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h4>Atrasado</h4>
+                            <h2 id="dash-total-late">R$ 0,00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box bg-purple" style="background: #8b5cf6;">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
                         <div>
                             <h4>Total Alunos</h4>
-                            <h2 id="total-alunos">0</h2>
+                            <h2 id="dash-total-students">0</h2>
+                        </div>
+                    </div>
+                    <!-- New Cards for Split Revenue -->
+                    <div class="card stat-card">
+                        <div class="icon-box bg-green">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                        <div>
+                            <h4>Total Professores</h4>
+                            <h2 id="dash-total-prof">R$ 0,00</h2>
                         </div>
                     </div>
                     <div class="card stat-card">
-                        <div class="icon-box bg-red"><i class="fa-solid fa-clock"></i></div>
+                        <div class="icon-box" style="background: #8b5cf6;">
+                            <i class="fa-solid fa-church"></i>
+                        </div>
                         <div>
-                            <h4>Atrasados</h4>
-                            <h2 id="total-atrasados">0</h2>
+                            <h4>Total Igreja</h4>
+                            <h2 id="dash-total-church">R$ 0,00</h2>
                         </div>
                     </div>
                     <div class="card stat-card">
-                        <div class="icon-box bg-green"><i class="fa-solid fa-dollar-sign"></i></div>
-                        <div>
-                            <h4>Recebido (Mês)</h4>
-                            <h2 id="total-recebido">R$ 0,00</h2>
+                        <div class="icon-box" style="background: #f59e0b;">
+                            <i class="fa-solid fa-user-slash"></i>
                         </div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="icon-box bg-yellow"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div>
-                            <h2 id="total-areceber">R$ 0,00</h2>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="icon-box" style="background: #475569;"><i class="fa-solid fa-user-slash"></i></div>
                         <div>
                             <h4>Isentos/Zerados</h4>
-                            <h2 id="total-isentos">0</h2>
+                            <h2 id="dash-total-exempt">0</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon-box" style="background: #06b6d4;">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h4>Previsão Total</h4>
+                            <h2 id="dash-total-forecast">R$ 0,00</h2>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-details">
-                    <div class="card chart-card">
-                        <h3>Receita por Professor</h3>
-                        <ul id="professor-stats-list" class="stats-list">
+                <!-- Professor Revenue Breakdown -->
+                <div class="card" style="margin-top: 2rem;">
+                    <h3><i class="fa-solid fa-chart-pie"></i> Receita por Professor (Mês Atual)</h3>
+                    <ul id="professor-revenue-list" class="stats-list">
+                        <!-- Injected via JS -->
+                    </ul>
+                </div>
+
+                <div class="grid-container" style="margin-top: 2rem;">
+                    <div class="card">
+                        <h3>Próximos Vencimentos</h3>
+                        <ul id="upcoming-list" class="stats-list">
+                            <!-- Injected via JS -->
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Atrasos Recentes</h3>
+                        <ul id="late-list" class="stats-list">
                             <!-- Injected via JS -->
                         </ul>
                     </div>
@@ -213,86 +249,61 @@
                     </div>
 
                     <div style="display: flex; gap: 1rem; align-items: center;">
-                        <!-- Styled Month Selector -->
-                        <div style="position: relative;">
-                            <i class="fa-solid fa-calendar-days"
-                                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8b5cf6; z-index: 1;"></i>
-                            <input type="month" id="billing-month" style="padding: 0.6rem 0.6rem 0.6rem 40px; 
-                                          border-radius: 8px; 
-                                          border: 1px solid rgba(139, 92, 246, 0.3); 
-                                          background: rgba(139, 92, 246, 0.1); 
-                                          color: #f1f5f9;
-                                          font-weight: 500;
-                                          cursor: pointer;
-                                          min-width: 180px;
-                                          transition: all 0.2s;">
+                        <!-- Filter Group -->
+                        <div class="filter-group">
+                            <select id="billing-status-filter" class="input-dark" onchange="filterBilling()"
+                                style="min-width: 140px;">
+                                <option value="all">Todos Status</option>
+                                <option value="PENDENTE">Pendentes</option>
+                                <option value="PAGO">Pagos</option>
+                                <option value="ATRASADO">Atrasados</option>
+                            </select>
+
+                            <input type="text" id="billing-search" class="input-dark" placeholder="Buscar aluno..."
+                                onkeyup="filterBilling()" style="min-width: 200px;">
                         </div>
 
-                        <!-- Search Bar -->
-                        <div style="position: relative;">
-                            <i class="fa-solid fa-search"
-                                style="position: absolute; left: 10px; top: 12px; color: var(--text-muted);"></i>
-                            <input type="text" id="billing-search" placeholder="Buscar cliente..."
-                                onkeyup="applySorting()"
-                                style="padding-left: 35px; padding: 0.6rem 0.6rem 0.6rem 35px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white; min-width: 250px;">
+                        <!-- Date Picker -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="btn-icon" onclick="changeBillingMonth(-1)"
+                                style="width: 36px; height: 38px;">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <input type="month" id="billing-month" class="input-dark" value="2024-01">
+                            <button class="btn-icon" onclick="changeBillingMonth(1)" style="width: 36px; height: 38px;">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
                         </div>
+
+                        <button class="btn-primary" onclick="fetchBilling()">
+                            <i class="fa-solid fa-sync"></i> Atualizar
+                        </button>
                     </div>
                 </header>
 
-                <!-- Minimal Filter Controls -->
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <i class="fa-solid fa-sort"></i>
-                        <select id="sort-field" onchange="applySorting()" class="filter-select">
-                            <option value="nome">Nome</option>
-                            <option value="valor">Valor</option>
-                            <option value="status">Status</option>
-                            <option value="vencimento">Vencimento</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <i class="fa-solid fa-arrow-down-short"></i>
-                        <select id="sort-order" onchange="applySorting()" class="filter-select">
-                            <option value="asc">A-Z / Menor-Maior</option>
-                            <option value="desc">Z-A / Maior-Menor</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <i class="fa-solid fa-filter"></i>
-                        <select id="filter-status" onchange="applySorting()" class="filter-select">
-                            <option value="all">Todos</option>
-                            <option value="PAGO">Pago</option>
-                            <option value="PENDENTE">Pendente</option>
-                            <option value="ATRASADO">Atrasado</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="table-container card">
+                <div class="card table-container">
                     <table class="billing-table">
                         <thead>
                             <tr>
-                                <th>Cliente</th>
-                                <th>WhatsApp</th>
-                                <th>Valor a Cobrar (Editável)</th>
-                                <th>Professor (R$)</th>
-                                <th>Igreja (R$)</th>
-                                <th>Ação</th>
+                                <th>Aluno</th>
+                                <th>Status</th>
+                                <th>Valor Total</th>
+                                <th>Divisão (Prof / Igreja)</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="billing-list">
-                            <!-- Rows injected via JS -->
+                            <!-- Rows via JS -->
                         </tbody>
                     </table>
                 </div>
             </section>
-
         </main>
     </div>
 
-    <!-- Client Modal -->
+    <!-- Modals -->
+
+    <!-- Client Modal (Main) -->
     <div id="client-modal" class="modal-overlay hidden">
         <div class="card modal-card">
             <header class="modal-header">
@@ -301,108 +312,146 @@
             </header>
 
             <form id="form-client">
-                <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="client-name" required placeholder="Ex: João Silva">
-                </div>
-                <div class="form-group">
-                    <label>Endereço</label>
-                    <input type="text" id="client-address" required placeholder="Ex: Rua das Flores, 123">
-                </div>
-                <div class="form-group">
-                    <label>WhatsApp (apenas números)</label>
-                    <input type="text" id="client-phone" required placeholder="Ex: 5511999999999">
-                </div>
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Valor Total (R$)</label>
-                        <input type="number" id="client-value" step="0.01" required placeholder="0.00"
-                            onchange="calculateRevenueSplit()">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Dia Venc.</label>
-                        <input type="number" id="client-due-day" min="1" max="31" value="10">
-                    </div>
-                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 
-                <!-- Revenue Split Section -->
-                <div
-                    style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                    <label
-                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #8b5cf6; font-weight: 600;">
-                        <i class="fa-solid fa-hand-holding-dollar"></i>
-                        Divisão de Receita
-                    </label>
+                    <!-- Personal Info -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Nome do Aluno</label>
+                        <input type="text" id="client-name" required placeholder="Nome completo">
+                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 1;">
-                            <label>Professor Recebe (R$)</label>
-                            <input type="number" id="client-valor-professor" step="0.01" placeholder="0.00"
-                                onchange="calculateChurchPortion()">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Endereço</label>
+                        <input type="text" id="client-address" placeholder="Ex: Rua das Flores, 123">
+                    </div>
+
+                    <div class="form-group">
+                        <label>WhatsApp</label>
+                        <input type="text" id="client-phone" required placeholder="Ex: 5511999999999">
+                    </div>
+
+                    <!-- Enrollments List Section -->
+                    <div
+                        style="grid-column: span 2; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <label style="color: #8b5cf6; font-weight: 600; font-size: 1.1rem;">
+                                <i class="fa-solid fa-graduation-cap"></i> Matrículas (Cursos)
+                            </label>
+                            <button type="button" id="btn-open-matricula-modal" class="btn-secondary"
+                                title="Adicionar Matrícula" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                <i class="fa-solid fa-plus"></i> Adicionar
+                                <span style="font-size: 0.7rem; display: block; font-weight: 400;">(Salve o cliente
+                                    primeiro)</span>
+                            </button>
                         </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>Igreja Recebe (R$)</label>
-                            <input type="number" id="client-valor-igreja" step="0.01" placeholder="0.00" readonly
-                                style="background: rgba(0,0,0,0.2); cursor: not-allowed;">
+
+                        <div id="enrollments-list" style="display: grid; gap: 0.5rem;">
+                            <!-- Matrículas rendered via JS -->
+                            <div
+                                style="text-align: center; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; color: #94a3b8;">
+                                Nenhum curso vinculado ainda.
+                            </div>
                         </div>
                     </div>
-
-                    <small style="color: #94a3b8; display: block; margin-top: 0.5rem;">
-                        <i class="fa-solid fa-info-circle"></i>
-                        Digite quanto o professor recebe. O valor da igreja será calculado automaticamente.
-                    </small>
-
-                    <div style="margin-top: 1rem;">
-                        <button type="button" class="btn-secondary" id="btn-apply-to-pending"
-                            style="width: 100%; display: none;">
-                            <i class="fa-solid fa-sync"></i> Aplicar Divisão a Todos os Meses Pendentes
-                        </button>
-                        <small
-                            style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem; text-align: center; font-size: 0.85rem;">
-                            Atualiza todos os pagamentos pendentes com os valores acima
-                        </small>
-                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Professor</label>
-                    <div class="input-with-button">
-                        <select id="client-professor">
-                            <option value="">Selecione...</option>
-                        </select>
-                        <button type="button" class="btn-secondary" id="btn-quick-add-prof" title="Novo Professor">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Curso</label>
-                    <div class="input-with-button">
-                        <select id="client-course">
-                            <option value="">Selecione...</option>
-                        </select>
-                        <button type="button" class="btn-secondary" id="btn-quick-add-course" title="Novo Curso">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="form-actions"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
                     <div style="display: flex; gap: 1rem;">
-                        <button type="button" class="btn-icon btn-danger" id="btn-pause-client" title="Pausar Cliente"
-                            style="display: none; align-items: center; gap: 8px; width: auto; padding-right: 12px;">
-                            <i class="fa-solid fa-pause"></i> Pausar
+                        <button type="button" class="btn-icon btn-danger" id="btn-delete-client" title="Excluir"
+                            style="display: none;">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
-                        <button type="button" class="btn-icon btn-danger" id="btn-delete-client" title="Excluir Cliente"
-                            style="display: none; align-items: center; gap: 8px; width: auto; padding-right: 12px;">
-                            <i class="fa-solid fa-trash"></i> Excluir
+                        <button type="button" class="btn-secondary" id="btn-pause-client" style="display: none;">
+                            <i class="fa-solid fa-pause"></i> Pausar
                         </button>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button type="button" class="btn-secondary" id="btn-cancel-client-modal">Cancelar</button>
-                        <button type="submit" class="btn-primary">Salvar</button>
+                        <button type="submit" class="btn-primary" style="min-width: 120px;">Salvar Cliente</button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Matricula (Enrollment) Modal - The "Box" -->
+    <div id="matricula-modal" class="modal-overlay hidden" style="z-index: 2100;">
+        <!-- Higher z-index to overlay client modal -->
+        <div class="card modal-card" style="max-width: 600px;">
+            <header class="modal-header">
+                <h3>Vincular Curso</h3>
+                <button class="btn-secondary" id="btn-close-matricula-modal"><i class="fa-solid fa-times"></i></button>
+            </header>
+
+            <form id="form-matricula" onsubmit="handleMatriculaSubmit(event)">
+                <input type="hidden" id="matricula-id"> <!-- Hidden ID for Editing -->
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- Course & Professor -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Curso</label>
+                        <div class="input-with-button">
+                            <select id="matricula-course" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                            <button type="button" class="btn-secondary" id="btn-qadd-course-mat">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Professor Responsável</label>
+                        <div class="input-with-button">
+                            <select id="matricula-professor" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                            <button type="button" class="btn-secondary" id="btn-qadd-prof-mat">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dia Vencimento</label>
+                        <input type="number" id="matricula-due-day" min="1" max="31" value="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Valor Mensalidade (R$)</label>
+                        <input type="number" id="matricula-value" step="0.01" required placeholder="0.00" min="0">
+                    </div>
+
+                    <!-- Revenue Split Box -->
+                    <div
+                        style="grid-column: span 2; background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #8b5cf6; font-weight: 600;">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                            Divisão de Receita
+                        </label>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Professor Recebe (R$)</label>
+                                <input type="number" id="matricula-valor-professor" step="0.01" placeholder="0.00"
+                                    value="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Igreja Recebe (R$)</label>
+                                <input type="number" id="matricula-valor-igreja" step="0.01" placeholder="0.00"
+                                    value="0" required readonly style="background: rgba(0,0,0,0.2);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions"
+                    style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn-secondary" id="btn-cancel-matricula-modal">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Vínculo</button>
                 </div>
             </form>
         </div>
@@ -441,39 +490,39 @@
             </div>
 
             <div class="form-actions">
-                <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1rem;">
-                    <i class="fa-solid fa-info-circle"></i> O QR Code deve ser anexado manualmente se necessário. O Pix
-                    Copia e Cola já está incluso no texto.
+                <div style="flex: 1;">
+                    <select id="whatsapp-template" class="input-dark" style="width: 100%;">
+                        <!-- Templates cargados via JS -->
+                    </select>
                 </div>
-                <button type="button" class="btn-whatsapp" id="btn-send-whatsapp"
-                    style="width: 100%; justify-content: center;">
-                    <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp Web
+                <button type="button" class="btn-whatsapp" id="btn-send-whatsapp">
+                    <i class="fa-brands fa-whatsapp"></i> Enviar
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Modal (New) -->
-    <div id="confirm-modal" class="modal-overlay hidden" style="z-index: 2000;">
-        <div class="modal-confirm-content">
-            <div class="modal-title-icon">
+    <!-- Toast -->
+    <div id="toast" class="toast hidden">Ação realizada com sucesso!</div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden" style="display: none;">
+        <div class="card modal-card" style="max-width: 400px; text-align: center; padding: 2rem;">
+            <div style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;">
                 <i class="fa-solid fa-circle-question"></i>
             </div>
-            <h3 id="confirm-title" style="margin-bottom: 0.8rem; color: #fff; font-size: 1.5rem; font-weight: 700;">
-                Confirmar?</h3>
-            <p id="confirm-message" style="color: #94a3b8; margin-bottom: 2rem; font-size: 1.05rem; line-height: 1.6;">
-                Tem certeza?</p>
+            <h3 id="confirm-title" style="margin-bottom: 0.5rem;">Tem certeza?</h3>
+            <p id="confirm-message" style="color: #94a3b8; margin-bottom: 1.5rem;">Essa ação não pode ser desfeita.</p>
+
             <div class="modal-confirm-actions">
-                <button class="btn-ghost" onclick="closeConfirmModal()">Cancelar</button>
-                <button class="btn-primary" id="btn-confirm-action">Sim, Confirmar</button>
+                <button class="btn-ghost" onclick="window.closeConfirmModal()">Cancelar</button>
+                <button class="btn-primary" id="btn-confirm-action">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden"></div>
-
-    <script src="js/app.js?v=46"></script>
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
 </body>
 
 </html>

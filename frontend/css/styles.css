@@ -138,10 +138,29 @@ body {
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: background 0.2s;
+}
+
+.input-dark {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f8fafc;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    color-scheme: dark;
+    /* Forces calendar picker to be dark */
+}
+
+.input-dark:focus {
+    border-color: var(--primary);
+}
+
+display: flex;
+align-items: center;
+gap: 0.5rem;
+transition: background 0.2s;
 }
 
 .btn-primary:hover {
@@ -382,7 +401,7 @@ body {
 
 .modal-card {
     width: 90%;
-    max-width: 500px;
+    max-width: 800px;
     max-height: 90vh;
     overflow-y: auto;
     display: flex;
@@ -436,14 +455,33 @@ body {
 
 /* Dashboard Styles */
 .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
 .stat-card {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
+}
+
+/* ... existing icon-box styles ... */
+
+.stat-card h4 {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    /* Prevent title wrapping */
+}
+
+.stat-card h2 {
+    font-size: 1.5rem;
+    /* Reduced from 1.8rem */
+    white-space: nowrap;
+    /* Prevent value wrapping */
+    font-weight: 700;
 }
 
 .icon-box {
@@ -479,9 +517,7 @@ body {
     margin-bottom: 0.2rem;
 }
 
-.stat-card h2 {
-    font-size: 1.8rem;
-}
+
 
 .stats-list {
     list-style: none;
@@ -1116,4 +1152,83 @@ input[type="month"]:focus {
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: rgba(139, 92, 246, 0.7);
+}
+/* Message Status Checks */
+.action-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.msg-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid #475569;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 8px; /* Tiny check icon */
+    color: transparent;
+}
+
+.msg-check:hover {
+    border-color: #64748b;
+}
+
+.msg-check.checked {
+    background: #10b981; /* Green */
+    border-color: #10b981;
+    color: white;
+}
+
+/* --- Billing Action Buttons Highlighting --- */
+.msg-check {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+    font-size: 1.35rem; /* Larger Icon */
+}
+
+.msg-check:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Checked States by Type */
+.msg-check.checked.check-lembrete {
+    border-color: #3b82f6; /* Blue */
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.msg-check.checked.check-hoje {
+    border-color: #fbbf24; /* Amber */
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+}
+
+.msg-check.checked.check-atraso {
+    border-color: #ef4444; /* Red */
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+/* Make sure active state is visible immediately on click if needed */
+.msg-check:active {
+    transform: scale(0.95);
 }
