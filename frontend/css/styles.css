@@ -222,6 +222,12 @@ body {
     font-weight: 500;
 }
 
+/* Centralizar a coluna de Ação (ultima coluna) */
+.billing-table th:last-child,
+.billing-table td:last-child {
+    text-align: center;
+}
+
 .billing-table input[type="number"] {
     background: var(--bg-dark);
     border: 1px solid var(--border);
@@ -377,7 +383,31 @@ body {
 .modal-card {
     width: 90%;
     max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
+
+/* Custom scrollbar for modal */
+.modal-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-card::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.modal-card::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.5);
+    border-radius: 10px;
+}
+
+.modal-card::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.7);
+}
+
 
 .modal-header {
     display: flex;
@@ -877,16 +907,27 @@ to {
 .input-currency-wrapper {
     display: flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 5px 10px;
-    border-radius: 8px;
-    border: 1px solid transparent;
+    gap: 4px;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+    height: 30px;
+    /* Altura fixa para alinhamento */
 }
 
+.input-currency-wrapper:hover,
 .input-currency-wrapper:focus-within {
-    border-color: #6366f1;
-    background: rgba(255, 255, 255, 0.1);
+    border-bottom-color: rgba(99, 102, 241, 0.5);
+    /* Cor primária suave */
+}
+
+.input-currency-wrapper span {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+    /* Ajuste fino vertical */
 }
 
 .input-clean {
@@ -896,8 +937,11 @@ to {
     font-size: 1rem;
     /* Larger font */
     font-weight: 500;
-    width: 80px;
+    width: 100px;
+    /* Aumentado de 80px para 100px */
     outline: none;
+    padding-left: 5px;
+    /* Espaço entre R$ e o número */
 }
 
 /* Badge Success */
@@ -911,4 +955,165 @@ to {
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+/* Minimal Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group i {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.filter-select {
+    padding: 0.4rem 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    color: #cbd5e1;
+    font-size: 0.875rem;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.filter-select:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.filter-select option {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* Icon Buttons for Edit/Delete */
+.btn-icon {
+    padding: 0.4rem 0.6rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    color: #60a5fa;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.btn-icon:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-icon.btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.btn-icon.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Client Status Tabs */
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #f1f5f9;
+}
+
+.tab-btn.active {
+    color: #8b5cf6;
+    border-bottom-color: #8b5cf6;
+}
+
+.tab-btn i {
+    margin-right: 0.5rem;
+}
+
+/* Styled Month Input */
+input[type="month"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+input[type="month"]:hover {
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    background: rgba(139, 92, 246, 0.15) !important;
+}
+
+input[type="month"]:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.6) !important;
+    background: rgba(139, 92, 246, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Add scroll to modal content */
+.modal-content {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+/* Scrollbar styling for modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.5);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.7);
 }

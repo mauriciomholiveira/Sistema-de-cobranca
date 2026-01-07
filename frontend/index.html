@@ -129,9 +129,13 @@
                     <!-- Professores -->
                     <div class="card">
                         <h3>Professores</h3>
-                        <div class="input-group">
-                            <input type="text" id="new-prof-name" placeholder="Novo Professor...">
-                            <button id="btn-add-prof" class="btn-primary"><i class="fa-solid fa-plus"></i></button>
+                        <div class="form-group">
+                            <input type="text" id="new-prof-name" placeholder="Nome do Professor..."
+                                style="margin-bottom: 0.5rem;">
+                            <input type="text" id="new-prof-pix" placeholder="Chave PIX (opcional)..."
+                                style="margin-bottom: 0.5rem;">
+                            <button id="btn-add-prof" class="btn-primary" style="width: 100%;"><i
+                                    class="fa-solid fa-plus"></i> Adicionar Professor</button>
                         </div>
                         <ul id="professors-list" class="simple-list"></ul>
                     </div>
@@ -139,11 +143,13 @@
                     <!-- Cursos -->
                     <div class="card">
                         <h3>Cursos</h3>
-                        <div class="input-group">
-                            <input type="text" id="new-course-name" placeholder="Nome do Curso...">
-                            <input type="number" id="new-course-value" placeholder="Valor Padrão (R$)"
-                                style="width: 120px;">
-                            <button id="btn-add-course" class="btn-primary"><i class="fa-solid fa-plus"></i></button>
+                        <div class="form-group">
+                            <input type="text" id="new-course-name" placeholder="Nome do Curso..."
+                                style="margin-bottom: 0.5rem;">
+                            <input type="number" id="new-course-value" placeholder="Valor Padrão (R$)" step="0.01"
+                                style="margin-bottom: 0.5rem;">
+                            <button id="btn-add-course" class="btn-primary" style="width: 100%;"><i
+                                    class="fa-solid fa-plus"></i> Adicionar Curso</button>
                         </div>
                         <ul id="courses-list" class="simple-list"></ul>
                     </div>
@@ -155,16 +161,46 @@
                 <header class="section-header">
                     <div>
                         <h1>Gestão de Clientes</h1>
-                        <p>Gerencie seus alunos e matrículas</p>
+                        <p>Cadastro e controle de alunos</p>
                     </div>
-                    <button id="btn-new-client" class="btn-primary">
-                        <i class="fa-solid fa-plus"></i> Novo Cliente
-                    </button>
+
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-search"
+                                style="position: absolute; left: 10px; top: 12px; color: var(--text-muted);"></i>
+                            <input type="text" id="client-search" placeholder="Buscar cliente..."
+                                style="padding-left: 35px; padding: 0.6rem 0.6rem 0.6rem 35px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white; min-width: 250px;"
+                                onkeyup="filterClients(this.value)">
+                        </div>
+                        <button id="btn-new-client" class="btn-primary">
+                            <i class="fa-solid fa-plus"></i> Novo Cliente
+                        </button>
+                    </div>
                 </header>
 
-                <!-- Client List -->
-                <div class="grid-container" id="clients-list">
-                    <!-- Cards will be injected here via JS -->
+                <!-- Client Status Tabs -->
+                <div
+                    style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <button id="tab-active-clients" class="tab-btn active" onclick="switchClientTab('active')">
+                        <i class="fa-solid fa-users"></i> Ativos
+                    </button>
+                    <button id="tab-inactive-clients" class="tab-btn" onclick="switchClientTab('inactive')">
+                        <i class="fa-solid fa-user-slash"></i> Inativos
+                    </button>
+                </div>
+
+                <!-- Active Clients List -->
+                <div id="active-clients-container">
+                    <div class="grid-container" id="clients-list">
+                        <!-- Cards will be injected here via JS -->
+                    </div>
+                </div>
+
+                <!-- Inactive Clients List -->
+                <div id="inactive-clients-container" style="display: none;">
+                    <div class="grid-container" id="inactive-clients-list">
+                        <!-- Inactive cards will be injected here via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -176,19 +212,63 @@
                         <p>Gerencie os pagamentos mensais</p>
                     </div>
 
-                    <div class="search-bar" style="gap: 1rem;">
-                        <!-- Month Filter -->
-                        <input type="month" id="billing-month"
-                            style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white;">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <!-- Styled Month Selector -->
+                        <div style="position: relative;">
+                            <i class="fa-solid fa-calendar-days"
+                                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8b5cf6; z-index: 1;"></i>
+                            <input type="month" id="billing-month" style="padding: 0.6rem 0.6rem 0.6rem 40px; 
+                                          border-radius: 8px; 
+                                          border: 1px solid rgba(139, 92, 246, 0.3); 
+                                          background: rgba(139, 92, 246, 0.1); 
+                                          color: #f1f5f9;
+                                          font-weight: 500;
+                                          cursor: pointer;
+                                          min-width: 180px;
+                                          transition: all 0.2s;">
+                        </div>
 
+                        <!-- Search Bar -->
                         <div style="position: relative;">
                             <i class="fa-solid fa-search"
                                 style="position: absolute; left: 10px; top: 12px; color: var(--text-muted);"></i>
                             <input type="text" id="billing-search" placeholder="Buscar cliente..."
-                                style="padding-left: 30px;">
+                                onkeyup="applySorting()"
+                                style="padding-left: 35px; padding: 0.6rem 0.6rem 0.6rem 35px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white; min-width: 250px;">
                         </div>
                     </div>
                 </header>
+
+                <!-- Minimal Filter Controls -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-sort"></i>
+                        <select id="sort-field" onchange="applySorting()" class="filter-select">
+                            <option value="nome">Nome</option>
+                            <option value="valor">Valor</option>
+                            <option value="status">Status</option>
+                            <option value="vencimento">Vencimento</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <i class="fa-solid fa-arrow-down-short"></i>
+                        <select id="sort-order" onchange="applySorting()" class="filter-select">
+                            <option value="asc">A-Z / Menor-Maior</option>
+                            <option value="desc">Z-A / Maior-Menor</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter"></i>
+                        <select id="filter-status" onchange="applySorting()" class="filter-select">
+                            <option value="all">Todos</option>
+                            <option value="PAGO">Pago</option>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="ATRASADO">Atrasado</option>
+                        </select>
+                    </div>
+                </div>
 
                 <div class="table-container card">
                     <table class="billing-table">
@@ -197,6 +277,8 @@
                                 <th>Cliente</th>
                                 <th>WhatsApp</th>
                                 <th>Valor a Cobrar (Editável)</th>
+                                <th>Professor (R$)</th>
+                                <th>Igreja (R$)</th>
                                 <th>Ação</th>
                             </tr>
                         </thead>
@@ -233,12 +315,52 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
-                        <label>Valor (R$)</label>
-                        <input type="number" id="client-value" step="0.01" required placeholder="0.00">
+                        <label>Valor Total (R$)</label>
+                        <input type="number" id="client-value" step="0.01" required placeholder="0.00"
+                            onchange="calculateRevenueSplit()">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label>Dia Venc.</label>
                         <input type="number" id="client-due-day" min="1" max="31" value="10">
+                    </div>
+                </div>
+
+                <!-- Revenue Split Section -->
+                <div
+                    style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #8b5cf6; font-weight: 600;">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        Divisão de Receita
+                    </label>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Professor Recebe (R$)</label>
+                            <input type="number" id="client-valor-professor" step="0.01" placeholder="0.00"
+                                onchange="calculateChurchPortion()">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Igreja Recebe (R$)</label>
+                            <input type="number" id="client-valor-igreja" step="0.01" placeholder="0.00" readonly
+                                style="background: rgba(0,0,0,0.2); cursor: not-allowed;">
+                        </div>
+                    </div>
+
+                    <small style="color: #94a3b8; display: block; margin-top: 0.5rem;">
+                        <i class="fa-solid fa-info-circle"></i>
+                        Digite quanto o professor recebe. O valor da igreja será calculado automaticamente.
+                    </small>
+
+                    <div style="margin-top: 1rem;">
+                        <button type="button" class="btn-secondary" id="btn-apply-to-pending"
+                            style="width: 100%; display: none;">
+                            <i class="fa-solid fa-sync"></i> Aplicar Divisão a Todos os Meses Pendentes
+                        </button>
+                        <small
+                            style="color: rgba(255,255,255,0.5); display: block; margin-top: 0.5rem; text-align: center; font-size: 0.85rem;">
+                            Atualiza todos os pagamentos pendentes com os valores acima
+                        </small>
                     </div>
                 </div>
 
@@ -266,9 +388,21 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" id="btn-cancel-client-modal">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
+                <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn-icon btn-danger" id="btn-pause-client" title="Pausar Cliente"
+                            style="display: none; align-items: center; gap: 8px; width: auto; padding-right: 12px;">
+                            <i class="fa-solid fa-pause"></i> Pausar
+                        </button>
+                        <button type="button" class="btn-icon btn-danger" id="btn-delete-client" title="Excluir Cliente"
+                            style="display: none; align-items: center; gap: 8px; width: auto; padding-right: 12px;">
+                            <i class="fa-solid fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn-secondary" id="btn-cancel-client-modal">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -339,7 +473,7 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden"></div>
 
-    <script src="js/app.js?v=32"></script>
+    <script src="js/app.js?v=46"></script>
 </body>
 
 </html>
