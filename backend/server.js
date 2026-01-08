@@ -96,14 +96,17 @@ app.get('/api/professores', async (req, res) => {
 });
 
 app.post('/api/professores', async (req, res) => {
-    const { nome, pix } = req.body;
-    await db.query('INSERT INTO professores (nome, pix) VALUES ($1, $2)', [nome, pix || null]);
+    const { nome, pix, cpf, contato, endereco, dados_bancarios } = req.body;
+    await db.query(
+        'INSERT INTO professores (nome, pix, cpf, contato, endereco, dados_bancarios) VALUES ($1, $2, $3, $4, $5, $6)', 
+        [nome, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null]
+    );
     res.status(201).send();
 });
 
 app.put('/api/professores/:id', async (req, res) => {
     const { id } = req.params;
-    const { nome, pix, active } = req.body;
+    const { nome, pix, active, cpf, contato, endereco, dados_bancarios } = req.body;
 
     const fields = [];
     const values = [];
@@ -112,6 +115,12 @@ app.put('/api/professores/:id', async (req, res) => {
     if (nome !== undefined) { fields.push(`nome = $${idx++}`); values.push(nome); }
     if (pix !== undefined) { fields.push(`pix = $${idx++}`); values.push(pix); }
     if (active !== undefined) { fields.push(`active = $${idx++}`); values.push(active); }
+    
+    // New fields
+    if (cpf !== undefined) { fields.push(`cpf = $${idx++}`); values.push(cpf); }
+    if (contato !== undefined) { fields.push(`contato = $${idx++}`); values.push(contato); }
+    if (endereco !== undefined) { fields.push(`endereco = $${idx++}`); values.push(endereco); }
+    if (dados_bancarios !== undefined) { fields.push(`dados_bancarios = $${idx++}`); values.push(dados_bancarios); }
 
     if (fields.length === 0) return res.status(400).send('No fields to update');
 

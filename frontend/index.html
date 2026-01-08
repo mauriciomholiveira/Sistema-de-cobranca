@@ -23,11 +23,11 @@
                 <i class="fa-solid fa-layer-group"></i> PremiumSys
             </div>
             <ul class="nav-links">
-                <li><a data-target="dashboard-section" class="active"><i class="fa-solid fa-chart-line"></i>
+                <li><a href="#dashboard-section" class="active"><i class="fa-solid fa-chart-line"></i>
                         Dashboard</a></li>
-                <li><a data-target="billing-section"><i class="fa-solid fa-file-invoice-dollar"></i> Cobrança</a></li>
-                <li><a data-target="clients-section"><i class="fa-solid fa-users"></i> Clientes</a></li>
-                <li><a data-target="management-section"><i class="fa-solid fa-list-check"></i> Gestão</a></li>
+                <li><a href="#billing-section"><i class="fa-solid fa-file-invoice-dollar"></i> Cobrança</a></li>
+                <li><a href="#clients-section"><i class="fa-solid fa-users"></i> Clientes</a></li>
+                <li><a href="#management-section"><i class="fa-solid fa-list-check"></i> Gestão</a></li>
             </ul>
         </aside>
 
@@ -161,35 +161,47 @@
                     </div>
                 </header>
 
-                <div class="grid-container">
-                    <!-- Professores -->
+                <!-- Management Tabs -->
+                <div
+                    style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <button id="tab-man-professors" class="tab-btn active" onclick="switchManagementTab('professors')">
+                        <i class="fa-solid fa-chalkboard-user"></i> Professores
+                    </button>
+                    <button id="tab-man-courses" class="tab-btn" onclick="switchManagementTab('courses')">
+                        <i class="fa-solid fa-graduation-cap"></i> Cursos
+                    </button>
+                </div>
+
+                <!-- Professors Content -->
+                <div id="man-professors-content">
                     <div class="card">
-                        <h3>Professores</h3>
-                        <div class="form-group">
-                            <input type="text" id="new-prof-name" placeholder="Nome do Professor..."
-                                style="margin-bottom: 0.5rem;">
-                            <input type="text" id="new-prof-pix" placeholder="Chave PIX (opcional)..."
-                                style="margin-bottom: 0.5rem;">
-                            <button id="btn-add-prof" class="btn-primary" style="width: 100%;"><i
-                                    class="fa-solid fa-plus"></i> Adicionar Professor</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Professores</h3>
+                            <button class="btn-primary" onclick="openProfessorModal()"
+                                style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">
+                                <i class="fa-solid fa-plus"></i> Novo
+                            </button>
                         </div>
                         <ul id="professors-list" class="simple-list"></ul>
                     </div>
+                </div>
 
-                    <!-- Cursos -->
+                <!-- Courses Content -->
+                <div id="man-courses-content" style="display: none;">
                     <div class="card">
-                        <h3>Cursos</h3>
-                        <div class="form-group">
-                            <input type="text" id="new-course-name" placeholder="Nome do Curso..."
-                                style="margin-bottom: 0.5rem;">
-                            <input type="number" id="new-course-value" placeholder="Valor Padrão (R$)" step="0.01"
-                                style="margin-bottom: 0.5rem;">
-                            <button id="btn-add-course" class="btn-primary" style="width: 100%;"><i
-                                    class="fa-solid fa-plus"></i> Adicionar Curso</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Cursos</h3>
+                            <button class="btn-primary" onclick="openCourseModal()"
+                                style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">
+                                <i class="fa-solid fa-plus"></i> Novo
+                            </button>
                         </div>
                         <ul id="courses-list" class="simple-list"></ul>
                     </div>
                 </div>
+
             </section>
 
             <!-- Clients Section -->
@@ -251,6 +263,12 @@
                     <div style="display: flex; gap: 1rem; align-items: center;">
                         <!-- Filter Group -->
                         <div class="filter-group">
+                            <!-- Helper Filter -->
+                            <select id="billing-professor-filter" class="input-dark" onchange="filterBilling()"
+                                style="min-width: 160px;">
+                                <option value="all">Todos Professores</option>
+                            </select>
+
                             <select id="billing-status-filter" class="input-dark" onchange="filterBilling()"
                                 style="min-width: 140px;">
                                 <option value="all">Todos Status</option>
@@ -311,7 +329,7 @@
                 <button class="btn-secondary" id="btn-close-client-modal"><i class="fa-solid fa-times"></i></button>
             </header>
 
-            <form id="form-client">
+            <form id="form-client" onsubmit="handleClientSubmit(event)">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 
                     <!-- Personal Info -->
@@ -421,7 +439,8 @@
 
                     <div class="form-group">
                         <label>Valor Mensalidade (R$)</label>
-                        <input type="number" id="matricula-value" step="0.01" required placeholder="0.00" min="0">
+                        <input type="number" id="matricula-value" step="0.01" required placeholder="0.00" min="0"
+                            oninput="calculateMatriculaSplit()">
                     </div>
 
                     <!-- Revenue Split Box -->
@@ -437,7 +456,7 @@
                             <div class="form-group">
                                 <label>Professor Recebe (R$)</label>
                                 <input type="number" id="matricula-valor-professor" step="0.01" placeholder="0.00"
-                                    value="0" required>
+                                    value="0" required oninput="calculateMatriculaSplit()">
                             </div>
                             <div class="form-group">
                                 <label>Igreja Recebe (R$)</label>
@@ -502,6 +521,83 @@
         </div>
     </div>
 
+    <!-- Professor Modal -->
+    <div id="professor-modal" class="modal-overlay hidden">
+        <div class="card modal-card">
+            <header class="modal-header">
+                <h3 id="prof-modal-title">Novo Professor</h3>
+                <button class="btn-secondary" id="btn-close-prof-modal"><i class="fa-solid fa-times"></i></button>
+            </header>
+            <form id="form-professor">
+                <input type="hidden" id="prof-id">
+
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="prof-nome" class="input-dark" required>
+                </div>
+
+                <div class="form-cols">
+                    <div class="form-group">
+                        <label>CPF/CNPJ</label>
+                        <input type="text" id="prof-cpf" class="input-dark">
+                    </div>
+                    <div class="form-group">
+                        <label>Contato (Tel/Email)</label>
+                        <input type="text" id="prof-contato" class="input-dark">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Chave PIX</label>
+                    <input type="text" id="prof-pix" class="input-dark">
+                </div>
+
+                <div class="form-group">
+                    <label>Dados Bancários</label>
+                    <textarea id="prof-dados-bancarios" rows="2" class="input-dark"
+                        placeholder="Banco, Agência, Conta..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Endereço Completo</label>
+                    <textarea id="prof-endereco" rows="2" class="input-dark"></textarea>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-primary">Salvar Professor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Modal -->
+    <div id="course-modal" class="modal-overlay hidden">
+        <div class="card modal-card" style="max-width: 400px;">
+            <header class="modal-header">
+                <h3 id="course-modal-title">Novo Curso</h3>
+                <button class="btn-secondary" id="btn-close-course-modal"><i class="fa-solid fa-times"></i></button>
+            </header>
+            <form id="form-course">
+                <input type="hidden" id="course-id">
+
+                <div class="form-group">
+                    <label>Nome do Curso</label>
+                    <input type="text" id="course-nome" class="input-dark" required placeholder="Ex: Piano, Inglês...">
+                </div>
+
+                <div class="form-group">
+                    <label>Valor Mensalidade Padrão (R$)</label>
+                    <input type="number" id="course-value" class="input-dark" required min="0" step="0.01"
+                        placeholder="0.00">
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-primary">Salvar Curso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="toast hidden">Ação realizada com sucesso!</div>
 
@@ -522,7 +618,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/app.js"></script>
+    <!-- Scripts -->
+    <script type="module" src="js/modules/main.js"></script>
 </body>
 
 </html>

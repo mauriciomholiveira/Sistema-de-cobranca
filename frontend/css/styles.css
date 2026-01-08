@@ -535,8 +535,6 @@ transition: background 0.2s;
 .simple-list {
     list-style: none;
     margin-top: 1rem;
-    max-height: 200px;
-    overflow-y: auto;
 }
 
 .simple-list li {

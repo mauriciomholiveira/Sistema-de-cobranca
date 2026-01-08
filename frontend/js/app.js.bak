@@ -11,7 +11,7 @@ let currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 // --- Init ---
 async function init() {
     // FORCE HIDE ALL MODALS FIRST - before anything else
-    const modalsToHide = ['whatsapp-modal', 'client-modal', 'confirm-modal'];
+    const modalsToHide = ['whatsapp-modal', 'client-modal', 'confirm-modal', 'professor-modal', 'course-modal'];
     modalsToHide.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -210,7 +210,38 @@ async function fetchResources() {
 
         renderManagementLists();
         updateFormSelects();
+        populateBillingProfessorFilter();
     } catch (e) { console.error("Resources error:", e); }
+}
+
+// Populate Billing Professor Filter
+window.populateBillingProfessorFilter = () => {
+    const select = document.getElementById('billing-professor-filter');
+    if (!select) return;
+
+    // Keep "Todos" option
+    select.innerHTML = '<option value="all">Todos Professores</option>';
+
+    professors.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id; // Use ID for filtering
+        opt.textContent = p.nome;
+        select.appendChild(opt);
+    });
+};
+
+/* --- API Calls --- */
+async function fetchProfessors() {
+    try {
+        const res = await fetch(`${API_URL}/professores`);
+        professors = await res.json();
+        
+        renderManagementLists(); // Re-render management list
+        updateFormSelects();     // Re-populate forms
+        populateBillingProfessorFilter(); // Re-populate billing filter
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function fetchClients() {
@@ -302,7 +333,7 @@ function renderManagementLists() {
                 ${p.pix ? `<br><small style="color: #94a3b8;">PIX: ${p.pix}</small>` : ''}
             </div>
             <div style="display: flex; gap: 0.5rem;">
-                <button onclick="editProfessor(${p.id})" class="btn-icon" title="Editar">
+                <button onclick="openProfessorModal(${p.id})" class="btn-icon" title="Editar">
                     <i class="fa-solid fa-pen"></i>
                 </button>
                 <button onclick="deleteProfessor(${p.id}, '${p.nome}')" class="btn-icon btn-danger" title="Excluir">
@@ -317,13 +348,13 @@ function renderManagementLists() {
         <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(30, 41, 59, 0.3); border-radius: 6px; margin-bottom: 0.5rem;">
             <div>
                 <strong>${c.nome}</strong>
-                <br><small style="color: #94a3b8;">R$ ${parseFloat(c.mensalidade_padrao || 0).toFixed(2)}</small>
+                <br><small style="color: #94a3b8;">R$ ${parseFloat(c.mensalidade_padrao).toFixed(2)}</small>
             </div>
             <div style="display: flex; gap: 0.5rem;">
-                <button onclick="editCourse(${c.id})" class="btn-icon" title="Editar">
+                <button onclick="openCourseModal(${c.id})" class="btn-icon">
                     <i class="fa-solid fa-pen"></i>
                 </button>
-                <button onclick="deleteCourse(${c.id}, '${c.nome}')" class="btn-icon btn-danger" title="Excluir">
+                <button onclick="deleteCourse(${c.id}, '${c.nome}')" class="btn-icon btn-danger">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
@@ -1285,86 +1316,6 @@ function setupEventListeners() {
         });
     }
 
-    // --- Management Actions ---
-    const btnAddProf = document.getElementById('btn-add-prof');
-    if (btnAddProf) {
-        btnAddProf.addEventListener('click', async () => {
-            const nome = document.getElementById('new-prof-name').value;
-            const pix = document.getElementById('new-prof-pix').value;
-            if (!nome) return;
-
-            const res = await fetch(`${API_URL}/professores`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, pix: pix || null })
-            });
-
-            if (res.ok) {
-                document.getElementById('new-prof-name').value = '';
-                document.getElementById('new-prof-pix').value = '';
-                await fetchProfessors();
-                showToast('Professor adicionado!', false);
-            }
-        });
-    }
-
-    const btnAddCourse = document.getElementById('btn-add-course');
-    if (btnAddCourse) {
-        btnAddCourse.addEventListener('click', async () => {
-            const nome = document.getElementById('new-course-name').value;
-            const valor = document.getElementById('new-course-value').value;
-            if (!nome || !valor) return;
-
-            const res = await fetch(`${API_URL}/cursos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, mensalidade_padrao: parseFloat(valor) })
-            });
-
-            if (res.ok) {
-                document.getElementById('new-course-name').value = '';
-                document.getElementById('new-course-value').value = '';
-                await fetchCourses();
-                showToast('Curso adicionado!', false);
-            }
-        });
-    }
-
-    // --- Quick Add Listeners ---
-    const btnQuickProf = document.getElementById('btn-quick-add-prof');
-    if (btnQuickProf) {
-        btnQuickProf.addEventListener('click', async () => {
-            const nome = prompt("Nome do Novo Professor:");
-            if (nome) {
-                await fetch(`${API_URL}/professores`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome })
-                });
-                await fetchResources(); // Reload selects
-                // Auto-select the last one? Or just reload
-                showToast('Professor adicionado!');
-            }
-        });
-    }
-
-    const btnQuickCourse = document.getElementById('btn-quick-add-course');
-    if (btnQuickCourse) {
-        btnQuickCourse.addEventListener('click', async () => {
-            const nome = prompt("Nome do Novo Curso:");
-            if (nome) {
-                const valor = prompt("Valor Padrão (R$):", "0.00");
-                await fetch(`${API_URL}/cursos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome, mensalidade_padrao: parseFloat(valor) || 0 })
-                });
-                await fetchResources();
-                showToast('Curso adicionado!');
-            }
-        });
-    }
-
     // --- Course Selection Logic (Matricula Modal) ---
     const matCourseSelect = document.getElementById('matricula-course');
     if (matCourseSelect) {
@@ -1493,44 +1444,92 @@ function showToast(msg) {
 // Run
 document.addEventListener('DOMContentLoaded', init);
 
-// Edit Professor Function
-window.editProfessor = async (id) => {
-    const prof = professors.find(p => p.id === id);
-    if (!prof) return;
+// Professor Modal Logic
+window.openProfessorModal = (id = null) => {
+    const modal = document.getElementById('professor-modal');
+    const form = document.getElementById('form-professor');
+    const title = document.getElementById('prof-modal-title');
+    
+    if (!modal || !form) return;
 
-    const newName = prompt('Novo nome do professor:', prof.nome);
-    if (!newName || newName === prof.nome) {
-        const newPix = prompt('Chave PIX (deixe vazio para remover):', prof.pix || '');
-        if (newPix === (prof.pix || '')) return;
+    // Reset
+    form.reset();
+    document.getElementById('prof-id').value = '';
 
-        const res = await fetch(`${API_URL}/professores/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pix: newPix || null })
-        });
+    if (id) {
+        // Edit Mode
+        const p = professors.find(x => x.id === id);
+        if (!p) return;
+
+        title.textContent = 'Editar Professor';
+        document.getElementById('prof-id').value = p.id;
+        document.getElementById('prof-nome').value = p.nome || '';
+        document.getElementById('prof-cpf').value = p.cpf || '';
+        document.getElementById('prof-contato').value = p.contato || '';
+        document.getElementById('prof-pix').value = p.pix || '';
+        document.getElementById('prof-dados-bancarios').value = p.dados_bancarios || '';
+        document.getElementById('prof-endereco').value = p.endereco || '';
+    } else {
+        // New Mode
+        title.textContent = 'Novo Professor';
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+// Save Professor Handle
+document.getElementById('form-professor')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('prof-id').value;
+    const body = {
+        nome: document.getElementById('prof-nome').value,
+        cpf: document.getElementById('prof-cpf').value,
+        contato: document.getElementById('prof-contato').value,
+        pix: document.getElementById('prof-pix').value,
+        dados_bancarios: document.getElementById('prof-dados-bancarios').value,
+        endereco: document.getElementById('prof-endereco').value,
+    };
+
+    try {
+        let res;
+        if (id) {
+            // Update
+            res = await fetch(`${API_URL}/professores/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } else {
+            // Create
+            res = await fetch(`${API_URL}/professores`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        }
 
         if (res.ok) {
-            await fetchProfessors();
-            showToast('PIX atualizado!', false);
+            showToast(id ? 'Professor atualizado!' : 'Professor cadastrado!');
+            document.getElementById('professor-modal').classList.add('hidden');
+            document.getElementById('professor-modal').style.display = 'none';
+            fetchResources(); // Reload lists
+        } else {
+            showToast('Erro ao salvar professor.', true);
         }
-        return;
+    } catch (err) {
+        console.error(err);
+        showToast('Erro de conexão.', true);
     }
+});
 
-    const newPix = prompt('Chave PIX (deixe vazio para remover):', prof.pix || '');
+document.getElementById('btn-close-prof-modal')?.addEventListener('click', () => {
+    const m = document.getElementById('professor-modal');
+    m.classList.add('hidden');
+    m.style.display = 'none';
+});
 
-    const res = await fetch(`${API_URL}/professores/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: newName, pix: newPix || null })
-    });
 
-    if (res.ok) {
-        await fetchProfessors();
-        showToast('Professor atualizado!', false);
-    } else {
-        showToast('Erro ao atualizar professor', true);
-    }
-};
 
 // Toggle Professor Active Status (renamed from delete)
 window.deleteProfessor = async (id, nome) => {
@@ -1551,29 +1550,82 @@ window.deleteProfessor = async (id, nome) => {
 };
 
 // Edit Course Function
-window.editCourse = async (id) => {
-    const course = courses.find(c => c.id === id);
-    if (!course) return;
+// Open Course Modal
+window.openCourseModal = (id = null) => {
+    const modal = document.getElementById('course-modal');
+    const form = document.getElementById('form-course');
+    const title = document.getElementById('course-modal-title');
+    
+    if (!modal || !form) return;
 
-    const newName = prompt('Novo nome do curso:', course.nome);
-    if (!newName) return;
+    form.reset();
+    document.getElementById('course-id').value = '';
 
-    const newValue = prompt('Novo valor padrão (R$):', parseFloat(course.mensalidade_padrao).toFixed(2));
-    if (!newValue) return;
+    if (id) {
+        // Edit
+        const c = courses.find(x => x.id === id);
+        if (!c) return;
 
-    const res = await fetch(`${API_URL}/cursos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: newName, mensalidade_padrao: parseFloat(newValue) })
-    });
-
-    if (res.ok) {
-        await fetchCourses();
-        showToast('Curso atualizado!', false);
+        title.textContent = 'Editar Curso';
+        document.getElementById('course-id').value = c.id;
+        document.getElementById('course-nome').value = c.nome;
+        document.getElementById('course-value').value = c.mensalidade_padrao;
     } else {
-        showToast('Erro ao atualizar curso', true);
+        // New
+        title.textContent = 'Novo Curso';
+        document.getElementById('course-value').value = '0.00';
     }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 };
+
+// Save Course Handle
+document.getElementById('form-course')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('course-id').value;
+    const body = {
+        nome: document.getElementById('course-nome').value,
+        mensalidade_padrao: parseFloat(document.getElementById('course-value').value)
+    };
+
+    try {
+        let res;
+        if (id) {
+            // Update
+            res = await fetch(`${API_URL}/cursos/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } else {
+            // Create
+            res = await fetch(`${API_URL}/cursos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        }
+
+        if (res.ok) {
+            showToast(id ? 'Curso atualizado!' : 'Curso cadastrado!');
+            document.getElementById('course-modal').classList.add('hidden');
+            document.getElementById('course-modal').style.display = 'none';
+            fetchResources(); 
+        } else {
+            showToast('Erro ao salvar curso.', true);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Erro de conexão.', true);
+    }
+});
+
+document.getElementById('btn-close-course-modal')?.addEventListener('click', () => {
+    const m = document.getElementById('course-modal');
+    m.classList.add('hidden');
+    m.style.display = 'none';
+});
 
 // Toggle Course Active Status (renamed from delete)
 window.deleteCourse = async (id, nome) => {
@@ -1652,6 +1704,29 @@ function renderInactiveClients() {
         `;
     });
 }
+
+
+// Switch Management Tabs (Professors vs Courses)
+window.switchManagementTab = (tab) => {
+    const tabProf = document.getElementById('tab-man-professors');
+    const tabCourses = document.getElementById('tab-man-courses');
+    const contentProf = document.getElementById('man-professors-content');
+    const contentCourses = document.getElementById('man-courses-content');
+
+    if (!tabProf || !tabCourses || !contentProf || !contentCourses) return;
+
+    if (tab === 'professors') {
+        tabProf.classList.add('active');
+        tabCourses.classList.remove('active');
+        contentProf.style.display = 'block';
+        contentCourses.style.display = 'none';
+    } else {
+        tabProf.classList.remove('active');
+        tabCourses.classList.add('active');
+        contentProf.style.display = 'none';
+        contentCourses.style.display = 'block';
+    }
+};
 
 // Reactivate client
 window.reactivateClient = async (id, nome) => {
@@ -2134,18 +2209,29 @@ window.deleteMatricula = async (id) => {
 // --- Combined Search & Filter for Billing ---
 window.filterBilling = () => {
     const statusFilter = document.getElementById('billing-status-filter').value;
-    const searchTerm = document.getElementById('billing-search').value.toLowerCase().trim();
+    const professorFilter = document.getElementById('billing-professor-filter')?.value || 'all';
+    
+    const term = document.getElementById('billing-search').value.toLowerCase();
 
     const filtered = billingData.filter(item => {
-        // Status Check
-        const statusMatch = (statusFilter === 'all') || (item.status === statusFilter);
+        // Status Filter
+        let matchStatus = true;
+        if (statusFilter !== 'all') {
+            matchStatus = (item.status === statusFilter);
+        }
 
-        // Search Check (Name or Course)
+        // Professor Filter
+        let matchProf = true;
+        if (professorFilter !== 'all') {
+            // item.professor_id might be string or number
+            matchProf = (String(item.professor_id) === String(professorFilter));
+        }
+
+        // Search Filter
         const name = (item.nome || '').toLowerCase();
-        const course = (item.nome_curso || '').toLowerCase();
-        const searchMatch = !searchTerm || name.includes(searchTerm) || course.includes(searchTerm);
+        const matchSearch = name.includes(term);
 
-        return statusMatch && searchMatch;
+        return matchStatus && matchProf && matchSearch;
     });
 
     renderBillingTable(filtered);
