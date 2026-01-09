@@ -247,6 +247,31 @@ app.put('/api/clientes/:id', async (req, res) => {
     }
 });
 
+// Delete Client (Permanent)
+app.delete('/api/clientes/:id', async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        // First delete all related payments
+        await db.query('DELETE FROM pagamentos WHERE matricula_id IN (SELECT id FROM matriculas WHERE cliente_id = $1)', [id]);
+        
+        // Then delete all enrollments
+        await db.query('DELETE FROM matriculas WHERE cliente_id = $1', [id]);
+        
+        // Finally delete the client
+        const result = await db.query('DELETE FROM clientes WHERE id = $1 RETURNING *', [id]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Cliente não encontrado' });
+        }
+        
+        res.status(200).json({ message: 'Cliente excluído permanentemente' });
+    } catch (err) {
+        console.error('Error deleting client:', err);
+        res.status(500).json({ error: 'Erro ao excluir cliente' });
+    }
+});
+
 // 4. Billing Logic (The Brain)
 // Endpoint to list PAYMENTS for a specific month (or current)
 app.get('/api/cobranca', async (req, res) => {

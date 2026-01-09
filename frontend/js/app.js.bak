@@ -7,6 +7,7 @@ let courses = [];
 let templates = [];
 let billingData = [];
 let currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+let pendingEnrollments = []; // Matrículas temporárias para novos clientes
 
 // --- Init ---
 async function init() {
@@ -562,9 +563,8 @@ window.editClient = (id) => {
     // Note: Legacy financial fields (due day, standard value) are now handled via Matriculas
     // and do not exist in the main client form anymore.
 
-    // Show actions
-    document.getElementById('btn-pause-client').style.display = 'flex';
-    document.getElementById('btn-delete-client').style.display = 'flex';
+    // Show and configure action buttons
+    showClientActionButtons(id);
 
     // Load matriculas for this client
     if (typeof renderMatriculasList === 'function') {
@@ -590,21 +590,19 @@ window.openClientModal = (title) => {
         document.getElementById('form-client').reset();
         editingClientId = null;
         
-        // Hide Actions
+        // Hide Actions (pause/delete só aparecem em edição)
         document.getElementById('btn-pause-client').style.display = 'none';
         document.getElementById('btn-delete-client').style.display = 'none';
         
-        // Disable Matricula Adding
+        // NOVO: Habilitar matrícula mesmo para novo cliente
         if (btnAddMatricula) {
-            btnAddMatricula.disabled = true;
-            btnAddMatricula.style.opacity = '0.5';
-            btnAddMatricula.style.cursor = 'not-allowed';
-            // Show the warning text
-            const warningSpan = btnAddMatricula.querySelector('span');
-            if (warningSpan) warningSpan.style.display = 'inline';
+            btnAddMatricula.disabled = false;
+            btnAddMatricula.removeAttribute('disabled');
+            btnAddMatricula.style.opacity = '1';
+            btnAddMatricula.style.cursor = 'pointer';
         }
         if (listContainer) {
-            listContainer.innerHTML = '<div style="text-align: center; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; color: #94a3b8;">Salve o cliente primeiro para adicionar matrículas.</div>';
+            listContainer.innerHTML = '<div style="text-align: center; padding: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; color: #94a3b8;">Nenhum curso vinculado ainda.</div>';
         }
 
         window.originalClientValues = null;
@@ -612,11 +610,9 @@ window.openClientModal = (title) => {
         // Editing Mode
         if (btnAddMatricula) {
             btnAddMatricula.disabled = false;
+            btnAddMatricula.removeAttribute('disabled');
             btnAddMatricula.style.opacity = '1';
             btnAddMatricula.style.cursor = 'pointer';
-            // Hide the warning text in edit mode
-            const warningSpan = btnAddMatricula.querySelector('span');
-            if (warningSpan) warningSpan.style.display = 'none';
         }
         // Load Enrollments
         if (typeof renderMatriculasList === 'function' && editingClientId) {
@@ -691,49 +687,108 @@ document.getElementById('form-client').addEventListener('submit', async (e) => {
         }
 
         if (response.ok) {
-            // Toast logic simplified (removed revenue check since fields are gone)
-            showToast(editingClientId ? 'Cliente atualizado!' : 'Cliente cadastrado!');
+            const isNewClient = !editingClientId;
+            let newClientId = editingClientId;
+            
+            // Se é novo cliente, pegar o ID retornado
+            if (isNewClient) {
+                const data = await response.json();
+                newClientId = data.id;
+                editingClientId = newClientId; // Atualizar o ID global
+            }
+            
+            showToast(isNewClient ? 'Cliente cadastrado!' : 'Cliente atualizado!');
 
-            // Capture ID locally to avoid race conditions with global state
-            const targetId = editingClientId;
+            // Legacy code removed - financial values now handled via Matriculas
 
-            let promptForBulk = false;
-            // Use targetId instead of editingClientId in check
-            if (targetId && window.originalClientValues) {
-                const oldValor = parseFloat(window.originalClientValues.valor);
-                const oldValorProf = parseFloat(window.originalClientValues.valor_prof || 0);
-
-                if (newValor !== oldValor || newValorProf !== oldValorProf) {
-                    promptForBulk = true;
+            // Se é novo cliente, manter modal aberto e habilitar matrícula
+            if (isNewClient) {
+                // Atualizar título do modal
+                const modalTitle = document.querySelector('#client-modal h3');
+                if (modalTitle) modalTitle.textContent = 'Editar Cliente';
+                
+                // Habilitar botão de adicionar matrícula
+                const btnAddMatricula = document.getElementById('btn-open-matricula-modal');
+                console.log('🔧 Habilitando botão de matrícula...', btnAddMatricula);
+                if (btnAddMatricula) {
+                    btnAddMatricula.disabled = false;
+                    btnAddMatricula.removeAttribute('disabled'); // Força remoção
+                    btnAddMatricula.style.opacity = '1';
+                    btnAddMatricula.style.cursor = 'pointer';
+                    console.log('✅ Botão habilitado!');
                 }
-            }
-
-            if (promptForBulk) {
-                window.openConfirmModal(
-                    'Alteração Financeira',
-                    'Você alterou valores financeiros. Deseja aplicar os novos valores a todas as mensalidades PENDENTES deste aluno?',
-                    async () => {
-                        // Use local targetId
-                        await fetch(`${API_URL}/clientes/${targetId}/aplicar-divisao`, { method: 'PUT' });
-                        showToast('Valores aplicados aos pendentes!');
-                        fetchBilling();
+                
+                // Carregar lista de matrículas (vazia inicialmente)
+                if (typeof renderMatriculasList === 'function') {
+                    renderMatriculasList(newClientId);
+                }
+                
+                // Mostrar botões de ação
+                showClientActionButtons(newClientId);
+                
+                // Salvar matrículas pendentes no backend
+                if (pendingEnrollments.length > 0) {
+                    console.log('💾 Salvando', pendingEnrollments.length, 'matrícula(s) pendente(s)...');
+                    let savedCount = 0;
+                    
+                    for (const enrollment of pendingEnrollments) {
+                        try {
+                            console.log('📤 Enviando matrícula:', enrollment);
+                            const res = await fetch(`${API_URL}/matriculas`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    cliente_id: newClientId,
+                                    curso_id: enrollment.curso_id,
+                                    professor_id: enrollment.professor_id,
+                                    dia_vencimento: enrollment.dia_vencimento,
+                                    valor_mensalidade: enrollment.valor_mensalidade,
+                                    valor_professor: enrollment.valor_professor,
+                                    valor_igreja: enrollment.valor_igreja
+                                })
+                            });
+                            
+                            console.log('📥 Resposta:', res.status, res.ok);
+                            if (res.ok) {
+                                savedCount++;
+                                const data = await res.json();
+                                console.log('✅ Matrícula criada:', data);
+                            } else {
+                                const error = await res.text();
+                                console.error('❌ Erro ao criar matrícula:', error);
+                            }
+                        } catch (err) {
+                            console.error('Erro ao criar matrícula:', err);
+                        }
                     }
-                );
+                    
+                    pendingEnrollments = []; // Limpar lista
+                    showToast(`✅ Cliente e ${savedCount} matrícula(s) criados!`, false);
+                    
+                    // Fechar modal automaticamente após 1 segundo
+                    setTimeout(() => {
+                        const modal = document.getElementById('client-modal');
+                        if (modal) {
+                            modal.classList.add('hidden');
+                            modal.style.display = 'none';
+                        }
+                        editingClientId = null;
+                        document.getElementById('form-client').reset();
+                    }, 1000);
+                } else {
+                    showToast('✅ Cliente criado! Agora você pode vincular cursos.', false);
+                }
+                
+            } else {
+                // Se é edição, fechar modal normalmente
+                const modal = document.getElementById('client-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                }
+                editingClientId = null;
+                document.getElementById('form-client').reset();
             }
-
-            // Use targetId for toast message logic as well, or keep as is (since it runs immediately)
-            showToast(targetId ? 'Cliente atualizado!' : 'Cliente cadastrado!');
-
-            // Explicitly close modal
-            const modal = document.getElementById('client-modal');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.style.display = 'none'; // Force hide
-            }
-            editingClientId = null; // Clear ID
-
-            // Reset form
-            document.getElementById('form-client').reset();
 
             await fetchClients();
             fetchDashboard();
@@ -1261,13 +1316,6 @@ function setupEventListeners() {
             // Remove inline display style to allow modal to show
             const modal = document.getElementById('matricula-modal');
             modal.style.display = 'flex';
-            
-            // Check if we have a client context
-            if (!editingClientId) {
-                showToast('Erro: Cliente não identificado', true);
-                modal.classList.add('hidden');
-                modal.style.display = 'none';
-            }
         },
         () => {
             // onClose: Clean up
@@ -1278,6 +1326,32 @@ function setupEventListeners() {
         }
     );
 
+    // --- Phone Mask ---
+    const phoneInput = document.getElementById('client-phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+            
+            // Limita a 13 dígitos (55 + DDD + 9 dígitos)
+            value = value.substring(0, 13);
+            
+            // Aplica a máscara: +55 (XX) XXXXX-XXXX
+            if (value.length > 0) {
+                if (value.length <= 2) {
+                    value = '+' + value;
+                } else if (value.length <= 4) {
+                    value = '+' + value.substring(0, 2) + ' (' + value.substring(2);
+                } else if (value.length <= 9) {
+                    value = '+' + value.substring(0, 2) + ' (' + value.substring(2, 4) + ') ' + value.substring(4);
+                } else {
+                    value = '+' + value.substring(0, 2) + ' (' + value.substring(2, 4) + ') ' + 
+                            value.substring(4, 9) + '-' + value.substring(9);
+                }
+            }
+            
+            e.target.value = value;
+        });
+    }
 
 
     // --- Modal Listeners (WhatsApp Specifics) ---
@@ -2010,9 +2084,19 @@ window.deleteClient = async (clientId) => {
 
         if (res.ok) {
             showToast('Cliente excluído permanentemente!', false);
-            closeModal('client-modal');
+            
+            // Close modal
+            const modal = document.getElementById('client-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
+            
             await fetchClients();
-            renderActiveClients();
+            fetchDashboard();
+        } else {
+            const error = await res.json();
+            showToast(error.error || 'Erro ao excluir cliente', true);
         }
     } catch (err) {
         console.error('Error deleting client:', err);
@@ -2124,7 +2208,31 @@ window.calculateMatriculaSplit = () => {
 
 window.handleMatriculaSubmit = async (e) => {
     e.preventDefault();
-    if (!editingClientId) return;
+    
+    // Se não tem ID, adicionar à lista temporária
+    if (!editingClientId) {
+        const curso = courses.find(c => c.id == document.getElementById('matricula-course').value);
+        const professor = professors.find(p => p.id == document.getElementById('matricula-professor').value);
+        
+        pendingEnrollments.push({
+            curso_id: parseInt(document.getElementById('matricula-course').value),
+            professor_id: parseInt(document.getElementById('matricula-professor').value),
+            dia_vencimento: parseInt(document.getElementById('matricula-due-day').value),
+            valor_mensalidade: parseFloat(document.getElementById('matricula-value').value),
+            valor_professor: parseFloat(document.getElementById('matricula-valor-professor').value),
+            valor_igreja: parseFloat(document.getElementById('matricula-valor-igreja').value),
+            nome_curso: curso?.nome || 'Curso',
+            nome_professor: professor?.nome || 'Professor'
+        });
+        
+        console.log('✅ Matrícula adicionada à lista temporária:', pendingEnrollments);
+        showToast('✅ Matrícula adicionada! Salve o cliente para confirmar.');
+        document.getElementById('matricula-modal').classList.add('hidden');
+        document.getElementById('matricula-modal').style.display = 'none';
+        console.log('🔄 Chamando renderPendingEnrollments...');
+        renderPendingEnrollments();
+        return;
+    }
 
     const id = document.getElementById('matricula-id').value;
     const method = id ? 'PUT' : 'POST';
