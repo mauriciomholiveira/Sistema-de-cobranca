@@ -7,6 +7,7 @@ import { Button } from '../../common/Button';
 import { billingService } from '../../../services/billingService';
 import { whatsappService, type MessageType } from '../../../services/whatsappService';
 import type { Payment, PaymentFormData } from '../../../types';
+import { formatMonthYear } from '../../../utils/dateUtils';
 import './Billing.css';
 
 export const Billing: React.FC = () => {
@@ -77,17 +78,13 @@ export const Billing: React.FC = () => {
     setCurrentMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
   };
 
-  const formatMonthYear = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  };
-
   const handleMarkAsPaid = async (paymentId: number) => {
     try {
       await markAsPaid(paymentId);
+      showToast('Pagamento marcado como pago!', 'success');
     } catch (err) {
-      alert('Erro ao marcar como pago');
+      console.error(err);
+      showToast('Erro ao marcar como pago', 'error');
     }
   };
 

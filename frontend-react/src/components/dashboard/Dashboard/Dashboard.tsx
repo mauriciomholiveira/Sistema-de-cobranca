@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
+import { formatMonthYear } from '../../../utils/dateUtils';
 import type { ProfessorMetric } from '../../../types';
 import './Dashboard.css';
 
@@ -66,12 +67,6 @@ export const Dashboard: React.FC = () => {
     const date = new Date(year, month - 1, 1);
     date.setMonth(date.getMonth() + 1);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-  };
-
-  const formatMonthYear = (monthStr: string) => {
-    const [year, month] = monthStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
   const formatValue = (value: number) => {

@@ -165,10 +165,6 @@
   align-items: center;
   flex-wrap: wrap;
 }
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  align-items: flex-end;
-  flex-wrap: wrap;
-}
 
 .filters button {
   background: none;
