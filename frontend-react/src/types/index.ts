@@ -75,6 +75,7 @@ export interface Professor {
   id: number;
   nome: string;
   email?: string;
+  whatsapp?: string;
   data_nascimento?: string;
   pix?: string;
   cpf?: string;

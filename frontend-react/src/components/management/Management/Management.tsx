@@ -3,6 +3,9 @@ import { useResources } from '../../../contexts/ResourceContext';
 import { Modal } from '../../common/Modal';
 import { Button } from '../../common/Button';
 import { api } from '../../../services/api';
+import { fetchAddressByCep } from '../../../services/cepService';
+import { parseAddress, parseBankData, formatAddress, formatBankData } from '../../../utils/formatters';
+import type { AddressData, BankData } from '../../../utils/formatters';
 import './Management.css';
 
 export const Management: React.FC = () => {
@@ -17,7 +20,9 @@ export const Management: React.FC = () => {
   // Professor state
   const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
   const [editingProfessorId, setEditingProfessorId] = useState<number | null>(null);
-  const [professorForm, setProfessorForm] = useState<any>({ nome: '', email: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+  const [professorForm, setProfessorForm] = useState<any>({ nome: '', email: '', whatsapp: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+  const [addressForm, setAddressForm] = useState<AddressData>(parseAddress(''));
+  const [bankForm, setBankForm] = useState<BankData>(parseBankData(''));
   
   // Template state
   const [templates, setTemplates] = useState<any[]>([]);
@@ -88,6 +93,7 @@ export const Management: React.FC = () => {
         setProfessorForm({ 
           nome: professor.nome,
           email: professor.email || '',
+          whatsapp: professor.whatsapp || '',
           data_nascimento: professor.data_nascimento ? professor.data_nascimento.split('T')[0] : '', // Format date for input
           pix: professor.pix || '',
           cpf: professor.cpf || '',
@@ -97,10 +103,14 @@ export const Management: React.FC = () => {
           senha: '',
           confirmSenha: ''
         });
+        setAddressForm(parseAddress(professor.endereco));
+        setBankForm(parseBankData(professor.dados_bancarios));
         setEditingProfessorId(professorId);
       }
     } else {
-      setProfessorForm({ nome: '', email: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+      setProfessorForm({ nome: '', email: '', whatsapp: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+      setAddressForm(parseAddress(''));
+      setBankForm(parseBankData(''));
       setEditingProfessorId(null);
     }
     setIsProfessorModalOpen(true);
@@ -114,10 +124,16 @@ export const Management: React.FC = () => {
     }
 
     try {
+      const payload = {
+        ...professorForm,
+        endereco: formatAddress(addressForm),
+        dados_bancarios: formatBankData(bankForm)
+      };
+
       if (editingProfessorId) {
-        await api.put(`/professores/${editingProfessorId}`, professorForm);
+        await api.put(`/professores/${editingProfessorId}`, payload);
       } else {
-        await api.post('/professores', professorForm);
+        await api.post('/professores', payload);
       }
       setIsProfessorModalOpen(false);
       fetchResources();
@@ -133,6 +149,28 @@ export const Management: React.FC = () => {
         fetchResources();
       } catch (err) {
         console.error('Erro ao excluir professor:', err);
+      }
+    }
+  };
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCep = e.target.value;
+    setAddressForm({ ...addressForm, cep: newCep });
+
+    const cleanCep = newCep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      const address = await fetchAddressByCep(cleanCep);
+      if (address) {
+        setAddressForm(prev => ({
+          ...prev,
+          cep: newCep,
+          logradouro: address.logradouro,
+          bairro: address.bairro,
+          cidade: address.localidade,
+          uf: address.uf
+        }));
+        // Optional: Focus number field
+        document.getElementById('address-number')?.focus();
       }
     }
   };
@@ -349,13 +387,24 @@ export const Management: React.FC = () => {
             />
           </div>
           
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={professorForm.email || ''}
-              onChange={(e) => setProfessorForm({ ...professorForm, email: e.target.value })}
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={professorForm.email || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>WhatsApp</label>
+              <input
+                type="text"
+                value={professorForm.whatsapp || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, whatsapp: e.target.value })}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
           </div>
 
           <div className="form-row">
@@ -396,23 +445,123 @@ export const Management: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Endereço</label>
-            <input
-              type="text"
-              value={professorForm.endereco || ''}
-              onChange={(e) => setProfessorForm({ ...professorForm, endereco: e.target.value })}
-            />
+          <div className="section-divider">
+            <span>Endereço</span>
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group" style={{ flex: '0 0 120px' }}>
+              <label>CEP</label>
+              <input
+                type="text"
+                value={addressForm.cep}
+                onChange={handleCepChange}
+                placeholder="00000-000"
+                maxLength={9}
+              />
+            </div>
+            <div className="form-group" style={{ flex: 2 }}>
+              <label>Logradouro (Rua/Av)</label>
+              <input
+                type="text"
+                value={addressForm.logradouro}
+                onChange={(e) => setAddressForm({ ...addressForm, logradouro: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ flex: '0 0 80px' }}>
+              <label>Nº</label>
+              <input
+                id="address-number"
+                type="text"
+                value={addressForm.numero}
+                onChange={(e) => setAddressForm({ ...addressForm, numero: e.target.value })}
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Dados Bancários (Completo)</label>
-            <textarea
-              rows={3}
-              value={professorForm.dados_bancarios || ''}
-              onChange={(e) => setProfessorForm({ ...professorForm, dados_bancarios: e.target.value })}
-              placeholder="Agência, Conta, Banco..."
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Bairro</label>
+              <input
+                type="text"
+                value={addressForm.bairro}
+                onChange={(e) => setAddressForm({ ...addressForm, bairro: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Complemento</label>
+              <input
+                type="text"
+                value={addressForm.complemento}
+                onChange={(e) => setAddressForm({ ...addressForm, complemento: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Cidade</label>
+              <input
+                type="text"
+                value={addressForm.cidade}
+                onChange={(e) => setAddressForm({ ...addressForm, cidade: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ flex: '0 0 80px' }}>
+              <label>UF</label>
+              <input
+                type="text"
+                value={addressForm.uf}
+                onChange={(e) => setAddressForm({ ...addressForm, uf: e.target.value })}
+                maxLength={2}
+              />
+            </div>
+          </div>
+
+          <div className="section-divider">
+            <span>Dados Bancários</span>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Banco</label>
+              <input
+                type="text"
+                value={bankForm.banco}
+                onChange={(e) => setBankForm({ ...bankForm, banco: e.target.value })}
+                placeholder="Ex: Nubank, Inter..."
+              />
+            </div>
+            <div className="form-group">
+              <label>Tipo de Conta</label>
+              <select
+                value={bankForm.tipo_conta}
+                onChange={(e) => setBankForm({ ...bankForm, tipo_conta: e.target.value })}
+              >
+                <option value="Corrente">Corrente</option>
+                <option value="Poupança">Poupança</option>
+                <option value="Pagamento">Pagamento</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Agência</label>
+              <input
+                type="text"
+                value={bankForm.agencia}
+                onChange={(e) => setBankForm({ ...bankForm, agencia: e.target.value })}
+              />
+            </div>
+             <div className="form-group">
+              <label>Conta (com dígito)</label>
+              <input
+                type="text"
+                value={bankForm.conta}
+                onChange={(e) => setBankForm({ ...bankForm, conta: e.target.value })}
+              />
+            </div>
           </div>
 
           {!editingProfessorId && (

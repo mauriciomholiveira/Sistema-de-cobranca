@@ -129,12 +129,12 @@ app.get('/api/dashboard/professores', async (req, res) => {
 // 1. Professores
 app.get('/api/professores', async (req, res) => {
     // Return all fields except password
-    const result = await db.query('SELECT id, nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, active FROM professores WHERE active = TRUE ORDER BY nome');
+    const result = await db.query('SELECT id, nome, email, whatsapp, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, active FROM professores WHERE active = TRUE ORDER BY nome');
     res.json(result.rows);
 });
 
 app.post('/api/professores', async (req, res) => {
-    const { nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha } = req.body;
+    const { nome, email, whatsapp, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha } = req.body;
     
     let passwordHash = null;
     if (senha) {
@@ -143,8 +143,8 @@ app.post('/api/professores', async (req, res) => {
 
     try {
         await db.query(
-            'INSERT INTO professores (nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', 
-            [nome, email, data_nascimento, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null, passwordHash]
+            'INSERT INTO professores (nome, email, whatsapp, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', 
+            [nome, email, whatsapp || null, data_nascimento, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null, passwordHash]
         );
         res.status(201).send();
     } catch (err) {
@@ -155,7 +155,7 @@ app.post('/api/professores', async (req, res) => {
 
 app.put('/api/professores/:id', async (req, res) => {
     const { id } = req.params;
-    const { nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha, active } = req.body;
+    const { nome, email, whatsapp, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha, active } = req.body;
 
     const fields = [];
     const values = [];
@@ -163,6 +163,7 @@ app.put('/api/professores/:id', async (req, res) => {
 
     if (nome !== undefined) { fields.push(`nome = $${idx++}`); values.push(nome); }
     if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email); }
+    if (whatsapp !== undefined) { fields.push(`whatsapp = $${idx++}`); values.push(whatsapp); }
     if (data_nascimento !== undefined) { fields.push(`data_nascimento = $${idx++}`); values.push(data_nascimento); }
     if (pix !== undefined) { fields.push(`pix = $${idx++}`); values.push(pix); }
     if (cpf !== undefined) { fields.push(`cpf = $${idx++}`); values.push(cpf); }

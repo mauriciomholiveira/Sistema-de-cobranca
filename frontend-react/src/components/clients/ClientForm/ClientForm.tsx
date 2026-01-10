@@ -3,6 +3,9 @@ import { useClients } from '../../../contexts/ClientContext';
 import { useResources } from '../../../contexts/ResourceContext';
 import { Modal } from '../../common/Modal';
 import { Button } from '../../common/Button';
+import { fetchAddressByCep } from '../../../services/cepService';
+import { parseAddress, formatAddress } from '../../../utils/formatters';
+import type { AddressData } from '../../../utils/formatters';
 import type { ClientFormData, EnrollmentFormData, Enrollment } from '../../../types';
 import './ClientForm.css';
 
@@ -21,6 +24,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
     endereco: '',
     whatsapp: '',
   });
+  const [addressForm, setAddressForm] = useState<AddressData>(parseAddress(''));
   
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [pendingEnrollments, setPendingEnrollments] = useState<EnrollmentFormData[]>([]);
@@ -61,10 +65,12 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
           endereco: client.endereco,
           whatsapp: client.whatsapp,
         });
+        setAddressForm(parseAddress(client.endereco));
         loadEnrollments();
       }
     } else {
       setFormData({ nome: '', endereco: '', whatsapp: '+55 ' });
+      setAddressForm(parseAddress(''));
       setEnrollments([]);
       setPendingEnrollments([]);
     }
@@ -77,13 +83,40 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
     }
   };
 
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCep = e.target.value;
+    setAddressForm({ ...addressForm, cep: newCep });
+
+    const cleanCep = newCep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      const address = await fetchAddressByCep(cleanCep);
+      if (address) {
+        setAddressForm(prev => ({
+          ...prev,
+          cep: newCep,
+          logradouro: address.logradouro,
+          bairro: address.bairro,
+          cidade: address.localidade,
+          uf: address.uf
+        }));
+        // Optional: Focus number field
+        document.getElementById('client-address-number')?.focus();
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        endereco: formatAddress(addressForm)
+      };
+
       if (clientId) {
-        await updateClient(clientId, formData);
+        await updateClient(clientId, payload);
       } else {
-        const newClient = await createClient(formData);
+        const newClient = await createClient(payload);
         
         // Save pending enrollments
         for (const enrollment of pendingEnrollments) {
@@ -209,13 +242,76 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
           </div>
 
           <div className="form-group">
-            <label>Endereço</label>
-            <input
-              type="text"
-              value={formData.endereco}
-              onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-              required
-            />
+            <label style={{ color: '#94a3b8', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Endereço</label>
+            
+            <div className="form-row">
+              <div className="form-group" style={{ flex: '0 0 120px' }}>
+                <label>CEP</label>
+                <input
+                  type="text"
+                  value={addressForm.cep}
+                  onChange={handleCepChange}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+              </div>
+              <div className="form-group" style={{ flex: 2 }}>
+                <label>Logradouro (Rua/Av)</label>
+                <input
+                  type="text"
+                  value={addressForm.logradouro}
+                  onChange={(e) => setAddressForm({ ...addressForm, logradouro: e.target.value })}
+                />
+              </div>
+              <div className="form-group" style={{ flex: '0 0 80px' }}>
+                <label>Nº</label>
+                <input
+                  id="client-address-number"
+                  type="text"
+                  value={addressForm.numero}
+                  onChange={(e) => setAddressForm({ ...addressForm, numero: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Bairro</label>
+                <input
+                  type="text"
+                  value={addressForm.bairro}
+                  onChange={(e) => setAddressForm({ ...addressForm, bairro: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Complemento</label>
+                <input
+                  type="text"
+                  value={addressForm.complemento}
+                  onChange={(e) => setAddressForm({ ...addressForm, complemento: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Cidade</label>
+                <input
+                  type="text"
+                  value={addressForm.cidade}
+                  onChange={(e) => setAddressForm({ ...addressForm, cidade: e.target.value })}
+                />
+              </div>
+              <div className="form-group" style={{ flex: '0 0 80px' }}>
+                <label>UF</label>
+                <input
+                  type="text"
+                  value={addressForm.uf}
+                  onChange={(e) => setAddressForm({ ...addressForm, uf: e.target.value })}
+                  maxLength={2}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="form-group">
