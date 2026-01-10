@@ -82,8 +82,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Main metrics grid - Middle */}
-      <div className="metrics-grid">
+      {/* Financial metrics - 4 columns */}
+      <div className="financial-grid">
         <div className="metric-card success">
           <div className="metric-icon">
             <i className="fa-solid fa-check-circle"></i>
@@ -123,7 +123,10 @@ export const Dashboard: React.FC = () => {
             <p className="metric-value">R$ {Number(data.total_igreja).toFixed(2)}</p>
           </div>
         </div>
+      </div>
 
+      {/* Counter metrics - 3 columns */}
+      <div className="counter-grid">
         <div className="metric-card">
           <div className="metric-icon">
             <i className="fa-solid fa-users"></i>
