@@ -106,17 +106,37 @@
   font-size: 0.85rem;
 }
 
+.enrollment-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .enrollment-item button {
   background: none;
   border: none;
-  color: #ef4444;
   cursor: pointer;
   padding: 0.5rem;
   transition: all 0.2s;
+  border-radius: 6px;
 }
 
-.enrollment-item button:hover {
+.enrollment-item button:first-child {
+  color: #8b5cf6;
+}
+
+.enrollment-item button:first-child:hover {
+  color: #7c3aed;
+  background: rgba(139, 92, 246, 0.1);
+  transform: scale(1.1);
+}
+
+.enrollment-item button:last-child {
+  color: #ef4444;
+}
+
+.enrollment-item button:last-child:hover {
   color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
   transform: scale(1.1);
 }
 

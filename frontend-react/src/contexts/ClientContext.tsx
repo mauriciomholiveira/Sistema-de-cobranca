@@ -14,6 +14,7 @@ interface ClientContextType {
   toggleClientActive: (id: number) => Promise<void>;
   getClientEnrollments: (clientId: number) => Promise<Enrollment[]>;
   createEnrollment: (clientId: number, data: EnrollmentFormData) => Promise<void>;
+  updateEnrollment: (enrollmentId: number, data: EnrollmentFormData) => Promise<void>;
   deleteEnrollment: (enrollmentId: number) => Promise<void>;
 }
 
@@ -140,6 +141,17 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
+  const updateEnrollment = useCallback(async (enrollmentId: number, data: EnrollmentFormData) => {
+    try {
+      await api.put(`/matriculas/${enrollmentId}`, data);
+      showToast('Matrícula atualizada com sucesso!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao atualizar matrícula', 'error');
+      throw err;
+    }
+  }, [showToast]);
+
   const deleteEnrollment = useCallback(async (enrollmentId: number) => {
     try {
       await api.delete(`/matriculas/${enrollmentId}`);
@@ -162,6 +174,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         toggleClientActive,
         getClientEnrollments,
         createEnrollment,
+        updateEnrollment,
         deleteEnrollment,
       }}
     >

@@ -13,7 +13,7 @@ interface ClientFormProps {
 }
 
 export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientId }) => {
-  const { clients, createClient, updateClient, getClientEnrollments, createEnrollment, deleteEnrollment } = useClients();
+  const { clients, createClient, updateClient, getClientEnrollments, createEnrollment, updateEnrollment, deleteEnrollment } = useClients();
   const { courses, professors, fetchResources } = useResources();
   
   const [formData, setFormData] = useState<ClientFormData>({
@@ -25,6 +25,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [pendingEnrollments, setPendingEnrollments] = useState<EnrollmentFormData[]>([]);
   const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false);
+  const [editingEnrollmentId, setEditingEnrollmentId] = useState<number | null>(null);
   const [enrollmentForm, setEnrollmentForm] = useState<EnrollmentFormData>({
     curso_id: 0,
     professor_id: 0,
@@ -99,17 +100,41 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
   const handleAddEnrollment = () => {
     if (enrollmentForm.curso_id && enrollmentForm.professor_id) {
       if (clientId) {
-        createEnrollment(clientId, enrollmentForm).then(() => {
-          loadEnrollments();
-          setIsEnrollmentModalOpen(false);
-          resetEnrollmentForm();
-        });
+        if (editingEnrollmentId) {
+          // Update existing enrollment
+          updateEnrollment(editingEnrollmentId, enrollmentForm).then(() => {
+            loadEnrollments();
+            setIsEnrollmentModalOpen(false);
+            resetEnrollmentForm();
+            setEditingEnrollmentId(null);
+          });
+        } else {
+          // Create new enrollment
+          createEnrollment(clientId, enrollmentForm).then(() => {
+            loadEnrollments();
+            setIsEnrollmentModalOpen(false);
+            resetEnrollmentForm();
+          });
+        }
       } else {
         setPendingEnrollments([...pendingEnrollments, enrollmentForm]);
         setIsEnrollmentModalOpen(false);
         resetEnrollmentForm();
       }
     }
+  };
+
+  const handleEditEnrollment = (enrollment: Enrollment) => {
+    setEnrollmentForm({
+      curso_id: enrollment.curso_id,
+      professor_id: enrollment.professor_id,
+      dia_vencimento: enrollment.dia_vencimento,
+      valor_mensalidade: enrollment.valor_mensalidade,
+      valor_professor: enrollment.valor_professor,
+      valor_igreja: enrollment.valor_igreja,
+    });
+    setEditingEnrollmentId(enrollment.id);
+    setIsEnrollmentModalOpen(true);
   };
 
   const handleDeleteEnrollment = async (enrollmentId: number) => {
@@ -132,6 +157,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
       valor_professor: 0,
       valor_igreja: 0,
     });
+    setEditingEnrollmentId(null);
   };
 
   const handleCourseChange = (courseId: number) => {
@@ -219,9 +245,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
                       <strong>{e.nome_curso}</strong>
                       <span>Prof: {e.nome_professor} • Dia {e.dia_vencimento} • R$ {e.valor_mensalidade}</span>
                     </div>
-                    <button type="button" onClick={() => handleDeleteEnrollment(e.id)}>
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
+                    <div className="enrollment-actions">
+                      <button type="button" onClick={() => handleEditEnrollment(e)} title="Editar matrícula">
+                        <i className="fa-solid fa-pen"></i>
+                      </button>
+                      <button type="button" onClick={() => handleDeleteEnrollment(e.id)} title="Excluir matrícula">
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -266,8 +297,11 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
 
       <Modal
         isOpen={isEnrollmentModalOpen}
-        onClose={() => setIsEnrollmentModalOpen(false)}
-        title="Vincular Curso"
+        onClose={() => {
+          setIsEnrollmentModalOpen(false);
+          resetEnrollmentForm();
+        }}
+        title={editingEnrollmentId ? "Editar Matrícula" : "Vincular Curso"}
       >
         <div className="enrollment-form">
           <div className="form-group">
@@ -351,11 +385,14 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
           </div>
 
           <div className="form-actions">
-            <Button type="button" variant="secondary" onClick={() => setIsEnrollmentModalOpen(false)}>
+            <Button type="button" variant="secondary" onClick={() => {
+              setIsEnrollmentModalOpen(false);
+              resetEnrollmentForm();
+            }}>
               Cancelar
             </Button>
             <Button type="button" variant="primary" onClick={handleAddEnrollment}>
-              Salvar Vínculo
+              {editingEnrollmentId ? 'Atualizar Vínculo' : 'Salvar Vínculo'}
             </Button>
           </div>
         </div>
