@@ -132,7 +132,7 @@ export const Dashboard: React.FC = () => {
             <i className="fa-solid fa-users"></i>
           </div>
           <div className="metric-content">
-            <h3>Total Alunos</h3>
+            <h3>Alunos Ativos</h3>
             <p className="metric-value">{data.alunos}</p>
           </div>
         </div>
