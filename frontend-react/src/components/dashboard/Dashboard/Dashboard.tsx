@@ -19,22 +19,34 @@ export const Dashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [professorMetrics, setProfessorMetrics] = useState<ProfessorMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [valuesVisible, setValuesVisible] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchProfessorMetrics();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       const response = await api.get<DashboardData>('/dashboard');
       setData(response);
-      
-      const profMetrics = await api.get<ProfessorMetric[]>('/dashboard/professores');
-      setProfessorMetrics(profMetrics);
     } catch (err) {
-      console.error('Erro ao carregar dashboard:', err);
+      console.error('Erro ao carregar dados do dashboard:', err);
     } finally {
-      setLoading(false);
+      // Only set loading to false after both fetches are complete, or handle separately
+      // For now, assuming this is the main data fetch that determines overall loading
+      // If professorMetrics is also critical for initial render, loading state needs adjustment
+    }
+  };
+
+  const fetchProfessorMetrics = async () => {
+    try {
+      const response = await api.get<ProfessorMetric[]>('/dashboard/professores');
+      setProfessorMetrics(response);
+    } catch (err) {
+      console.error('Erro ao carregar métricas de professores:', err);
+    } finally {
+      setLoading(false); // Set loading to false after all initial data is fetched
     }
   };
 
@@ -69,15 +81,15 @@ export const Dashboard: React.FC = () => {
         <div className="forecast-grid-content">
           <div className="forecast-item total">
             <span className="forecast-label">Previsão Total</span>
-            <span className="forecast-value">R$ {Number(data.previsao_total).toFixed(2)}</span>
+            <span className="forecast-value">{formatValue(data.previsao_total)}</span>
           </div>
           <div className="forecast-item professor">
             <span className="forecast-label">Previsão Professores</span>
-            <span className="forecast-value">R$ {Number(data.total_professores).toFixed(2)}</span>
+            <span className="forecast-value">{formatValue(data.total_professores)}</span>
           </div>
           <div className="forecast-item church">
             <span className="forecast-label">Previsão Igreja</span>
-            <span className="forecast-value">R$ {Number(data.total_igreja).toFixed(2)}</span>
+            <span className="forecast-value">{formatValue(data.total_igreja)}</span>
           </div>
         </div>
       </div>
@@ -90,7 +102,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Recebido</h3>
-            <p className="metric-value">R$ {Number(data.recebido).toFixed(2)}</p>
+            <p className="metric-value">{formatValue(data.recebido)}</p>
           </div>
         </div>
 
@@ -100,7 +112,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>A Receber</h3>
-            <p className="metric-value">R$ {Number(data.a_receber).toFixed(2)}</p>
+            <p className="metric-value">{formatValue(data.a_receber)}</p>
           </div>
         </div>
 
@@ -110,7 +122,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Total Pago Professores</h3>
-            <p className="metric-value">R$ {Number(data.total_professores).toFixed(2)}</p>
+            <p className="metric-value">{formatValue(data.total_professores)}</p>
           </div>
         </div>
 
@@ -120,7 +132,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Total Pago Igreja</h3>
-            <p className="metric-value">R$ {Number(data.total_igreja).toFixed(2)}</p>
+            <p className="metric-value">{formatValue(data.total_igreja)}</p>
           </div>
         </div>
       </div>
@@ -133,7 +145,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Total Alunos</h3>
-            <p className="metric-value">{data.alunos}</p>
+            <p className="metric-value">{formatNumber(data.alunos)}</p>
           </div>
         </div>
 
@@ -143,7 +155,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Isentos</h3>
-            <p className="metric-value">{data.isentos}</p>
+            <p className="metric-value">{formatNumber(data.isentos)}</p>
           </div>
         </div>
 
@@ -153,7 +165,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="metric-content">
             <h3>Atrasados</h3>
-            <p className="metric-value">{data.atrasados}</p>
+            <p className="metric-value">{formatNumber(data.atrasados)}</p>
           </div>
         </div>
       </div>
@@ -193,11 +205,11 @@ export const Dashboard: React.FC = () => {
                 {professorMetrics.map((prof) => (
                   <tr key={prof.id}>
                     <td className="professor-name">{prof.nome}</td>
-                    <td className="metric-cell">{prof.total_alunos}</td>
-                    <td className="metric-cell success">R$ {Number(prof.a_receber).toFixed(2)}</td>
-                    <td className="metric-cell info">R$ {Number(prof.paga_igreja).toFixed(2)}</td>
-                    <td className="metric-cell warning">R$ {Number(prof.pendencias).toFixed(2)}</td>
-                    <td className="metric-cell primary">R$ {Number(prof.previsao_total).toFixed(2)}</td>
+                    <td className="metric-cell">{formatNumber(prof.total_alunos)}</td>
+                    <td className="metric-cell success">{formatValue(prof.a_receber)}</td>
+                    <td className="metric-cell info">{formatValue(prof.paga_igreja)}</td>
+                    <td className="metric-cell warning">{formatValue(prof.pendencias)}</td>
+                    <td className="metric-cell primary">{formatValue(prof.previsao_total)}</td>
                   </tr>
                 ))}
               </tbody>
