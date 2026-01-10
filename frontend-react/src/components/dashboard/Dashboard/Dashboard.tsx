@@ -20,15 +20,19 @@ export const Dashboard: React.FC = () => {
   const [professorMetrics, setProfessorMetrics] = useState<ProfessorMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [valuesVisible, setValuesVisible] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   useEffect(() => {
     fetchDashboardData();
     fetchProfessorMetrics();
-  }, []);
+  }, [selectedMonth]);
 
   const fetchDashboardData = async () => {
     try {
-      const response = await api.get<DashboardData>('/dashboard');
+      const response = await api.get<DashboardData>(`/dashboard?mes=${selectedMonth}`);
       setData(response);
     } catch (err) {
       console.error('Erro ao carregar dados do dashboard:', err);
@@ -41,13 +45,33 @@ export const Dashboard: React.FC = () => {
 
   const fetchProfessorMetrics = async () => {
     try {
-      const response = await api.get<ProfessorMetric[]>('/dashboard/professores');
+      const response = await api.get<ProfessorMetric[]>(`/dashboard/professores?mes=${selectedMonth}`);
       setProfessorMetrics(response);
     } catch (err) {
       console.error('Erro ao carregar métricas de professores:', err);
     } finally {
       setLoading(false); // Set loading to false after all initial data is fetched
     }
+  };
+
+  const handlePreviousMonth = () => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    date.setMonth(date.getMonth() - 1);
+    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    date.setMonth(date.getMonth() + 1);
+    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const formatMonthYear = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
   if (loading) {
@@ -70,7 +94,35 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <h2>Dashboard</h2>
+      <div className="dashboard-header">
+        <h2>Dashboard</h2>
+        <div className="header-controls">
+          <div className="month-selector">
+            <button 
+              className="month-nav-btn"
+              onClick={handlePreviousMonth}
+              title="Mês anterior"
+            >
+              <i className="fa-solid fa-chevron-left"></i>
+            </button>
+            <span className="current-month">{formatMonthYear(selectedMonth)}</span>
+            <button 
+              className="month-nav-btn"
+              onClick={handleNextMonth}
+              title="Próximo mês"
+            >
+              <i className="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <button 
+            className="toggle-visibility-btn"
+            onClick={() => setValuesVisible(!valuesVisible)}
+            title={valuesVisible ? 'Ocultar valores' : 'Mostrar valores'}
+          >
+            <i className={`fa-solid ${valuesVisible ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+          </button>
+        </div>
+      </div>
       
       {/* Forecast card - First */}
       <div className="forecast-card-top">
