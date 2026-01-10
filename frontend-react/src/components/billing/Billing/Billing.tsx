@@ -63,6 +63,26 @@ export const Billing: React.FC = () => {
     }
   };
 
+  const handlePreviousMonth = () => {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    date.setMonth(date.getMonth() - 1);
+    setCurrentMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [year, month] = currentMonth.split('-').map(Number);
+    const date = new Date(year, month - 1, 1);
+    date.setMonth(date.getMonth() + 1);
+    setCurrentMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const formatMonthYear = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
   const handleMarkAsPaid = async (paymentId: number) => {
     try {
       await markAsPaid(paymentId);
@@ -170,12 +190,29 @@ export const Billing: React.FC = () => {
       <div className="billing-header">
         <h2>Cobrança</h2>
         <div className="header-actions">
-          <input
-            type="month"
-            value={currentMonth}
-            onChange={(e) => setCurrentMonth(e.target.value)}
-            className="month-input"
-          />
+          <div className="month-selector">
+            <button 
+              className="month-nav-btn"
+              onClick={handlePreviousMonth}
+              title="Mês anterior"
+            >
+              <i className="fa-solid fa-chevron-left"></i>
+            </button>
+            <span className="current-month">{formatMonthYear(currentMonth)}</span>
+            <button 
+              className="month-nav-btn"
+              onClick={handleNextMonth}
+              title="Próximo mês"
+            >
+              <i className="fa-solid fa-chevron-right"></i>
+            </button>
+            <input
+              type="month"
+              value={currentMonth}
+              onChange={(e) => setCurrentMonth(e.target.value)}
+              className="month-picker-trigger"
+            />
+          </div>
         </div>
       </div>
 
