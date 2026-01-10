@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../services/api';
+import type { ProfessorMetric } from '../../../types';
 import './Dashboard.css';
 
 interface DashboardData {
@@ -16,6 +17,7 @@ interface DashboardData {
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [professorMetrics, setProfessorMetrics] = useState<ProfessorMetric[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +28,9 @@ export const Dashboard: React.FC = () => {
     try {
       const response = await api.get<DashboardData>('/dashboard');
       setData(response);
+      
+      const profMetrics = await api.get<ProfessorMetric[]>('/dashboard/professores');
+      setProfessorMetrics(profMetrics);
     } catch (err) {
       console.error('Erro ao carregar dashboard:', err);
     } finally {
@@ -136,6 +141,54 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Professor Metrics Section */}
+      {professorMetrics.length > 0 && (
+        <div className="professor-metrics-section">
+          <h3>Métricas por Professor</h3>
+          <div className="professor-table-container">
+            <table className="professor-table">
+              <thead>
+                <tr>
+                  <th>Professor</th>
+                  <th>
+                    <i className="fa-solid fa-users"></i>
+                    Alunos
+                  </th>
+                  <th>
+                    <i className="fa-solid fa-hand-holding-dollar"></i>
+                    A Receber
+                  </th>
+                  <th>
+                    <i className="fa-solid fa-church"></i>
+                    Paga Igreja
+                  </th>
+                  <th>
+                    <i className="fa-solid fa-triangle-exclamation"></i>
+                    Pendências
+                  </th>
+                  <th>
+                    <i className="fa-solid fa-chart-line"></i>
+                    Previsão Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {professorMetrics.map((prof) => (
+                  <tr key={prof.id}>
+                    <td className="professor-name">{prof.nome}</td>
+                    <td className="metric-cell">{prof.total_alunos}</td>
+                    <td className="metric-cell success">R$ {Number(prof.a_receber).toFixed(2)}</td>
+                    <td className="metric-cell info">R$ {Number(prof.paga_igreja).toFixed(2)}</td>
+                    <td className="metric-cell warning">R$ {Number(prof.pendencias).toFixed(2)}</td>
+                    <td className="metric-cell primary">R$ {Number(prof.previsao_total).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -51,7 +51,7 @@ app.get('/api/dashboard', async (req, res) => {
             [mes]
         );
 
-        // Revenue by Professor (This Month)
+        // Revenue by Professor (This Month) - ALL payments
         const receitaProfessor = await db.query(`
             SELECT 
                 p.nome, 
@@ -60,7 +60,7 @@ app.get('/api/dashboard', async (req, res) => {
             FROM pagamentos pg
             JOIN clientes c ON pg.cliente_id = c.id
             LEFT JOIN professores p ON pg.professor_id = p.id
-            WHERE pg.status = 'PAGO' AND pg.mes_ref = $1
+            WHERE pg.mes_ref = $1
             GROUP BY p.nome
         `, [mes]);
 
@@ -86,6 +86,37 @@ app.get('/api/dashboard', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro no dashboard' });
+    }
+});
+
+// Professor Dashboard Metrics
+app.get('/api/dashboard/professores', async (req, res) => {
+    try {
+        const mes = req.query.mes || new Date().toISOString().slice(0, 7);
+        
+        const query = `
+            SELECT 
+                p.id,
+                p.nome,
+                COUNT(DISTINCT m.cliente_id) FILTER (WHERE c.active = TRUE) as total_alunos,
+                COALESCE(SUM(pag.valor_professor_recebido) FILTER (WHERE pag.status = 'PAGO'), 0) as a_receber,
+                COALESCE(SUM(pag.valor_igreja_recebido) FILTER (WHERE pag.status = 'PAGO'), 0) as paga_igreja,
+                COALESCE(SUM(pag.valor_cobrado) FILTER (WHERE pag.status IN ('PENDENTE', 'ATRASADO')), 0) as pendencias,
+                COALESCE(SUM(pag.valor_cobrado), 0) as previsao_total
+            FROM professores p
+            LEFT JOIN matriculas m ON p.id = m.professor_id
+            LEFT JOIN clientes c ON m.cliente_id = c.id AND c.active = TRUE
+            LEFT JOIN pagamentos pag ON m.id = pag.matricula_id AND pag.mes_ref = $1
+            WHERE p.active = TRUE
+            GROUP BY p.id, p.nome
+            ORDER BY p.nome
+        `;
+        
+        const result = await db.query(query, [mes]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar métricas de professores' });
     }
 });
 
@@ -244,6 +275,37 @@ app.put('/api/clientes/:id', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erro ao atualizar cliente' });
+    }
+});
+
+// Toggle Client Active Status
+app.patch('/api/clientes/:id/toggle-active', async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        const result = await db.query(
+            'UPDATE clientes SET active = NOT active WHERE id = $1 RETURNING *',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Cliente não encontrado' });
+        }
+        
+        const client = result.rows[0];
+        
+        // Clean up pending payments if deactivating
+        if (!client.active) {
+            await db.query(
+                "DELETE FROM pagamentos WHERE cliente_id = $1 AND status = 'PENDENTE'",
+                [id]
+            );
+        }
+        
+        res.json(client);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao atualizar status do cliente' });
     }
 });
 

@@ -98,3 +98,95 @@
   color: #94a3b8;
   font-size: 1.1rem;
 }
+
+/* Professor Metrics Section */
+.professor-metrics-section {
+  margin-top: 3rem;
+}
+
+.professor-metrics-section h3 {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.professor-table-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.professor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.professor-table thead {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+}
+
+.professor-table th {
+  padding: 1rem;
+  text-align: left;
+  color: #8b5cf6;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.professor-table th:not(:first-child) {
+  text-align: right;
+}
+
+.professor-table th i {
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.professor-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.professor-table tbody tr:hover {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.professor-table td {
+  padding: 1rem;
+  color: white;
+}
+
+.professor-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+}
+
+.metric-cell {
+  font-weight: 600;
+  text-align: right;
+}
+
+.metric-cell.success {
+  color: #22c55e;
+}
+
+.metric-cell.info {
+  color: #60a5fa;
+}
+
+.metric-cell.warning {
+  color: #fbbf24;
+}
+
+.metric-cell.primary {
+  color: #8b5cf6;
+  font-size: 1.05rem;
+}

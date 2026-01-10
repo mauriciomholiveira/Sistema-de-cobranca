@@ -11,6 +11,7 @@ interface ClientContextType {
   createClient: (data: ClientFormData) => Promise<Client>;
   updateClient: (id: number, data: ClientFormData) => Promise<void>;
   deleteClient: (id: number) => Promise<void>;
+  toggleClientActive: (id: number) => Promise<void>;
   getClientEnrollments: (clientId: number) => Promise<Enrollment[]>;
   createEnrollment: (clientId: number, data: EnrollmentFormData) => Promise<void>;
   deleteEnrollment: (enrollmentId: number) => Promise<void>;
@@ -98,6 +99,26 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [showToast]);
 
+  const toggleClientActive = useCallback(async (id: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedClient = await api.patch<Client>(`/clientes/${id}/toggle-active`);
+      setClients(prev => prev.map(c => c.id === id ? updatedClient : c));
+      showToast(
+        updatedClient.active ? 'Cliente reativado!' : 'Cliente inativado!',
+        'success'
+      );
+    } catch (err) {
+      setError('Erro ao atualizar status do cliente');
+      showToast('Erro ao atualizar status', 'error');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
   const getClientEnrollments = useCallback(async (clientId: number): Promise<Enrollment[]> => {
     try {
       return await api.get<Enrollment[]>(`/matriculas/${clientId}`);
@@ -138,6 +159,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createClient,
         updateClient,
         deleteClient,
+        toggleClientActive,
         getClientEnrollments,
         createEnrollment,
         deleteEnrollment,

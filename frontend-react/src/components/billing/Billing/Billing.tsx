@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBilling } from '../../../contexts/BillingContext';
+import { useResources } from '../../../contexts/ResourceContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { Modal } from '../../common/Modal';
 import { Button } from '../../common/Button';
@@ -10,8 +11,11 @@ import './Billing.css';
 
 export const Billing: React.FC = () => {
   const { payments, loading, currentMonth, setCurrentMonth, fetchPayments, markAsPaid } = useBilling();
+  const { professors, fetchResources } = useResources();
   const { showToast } = useToast();
   const [filter, setFilter] = useState<'all' | 'PAGO' | 'PENDENTE' | 'ATRASADO'>('all');
+  const [selectedProfessors, setSelectedProfessors] = useState<number[]>([]);
+  const [isProfessorDropdownOpen, setIsProfessorDropdownOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editForm, setEditForm] = useState<PaymentFormData>({
@@ -22,7 +26,42 @@ export const Billing: React.FC = () => {
 
   useEffect(() => {
     fetchPayments(currentMonth);
-  }, [currentMonth, fetchPayments]);
+    fetchResources();
+  }, [currentMonth, fetchPayments, fetchResources]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.professor-filter')) {
+        setIsProfessorDropdownOpen(false);
+      }
+    };
+
+    if (isProfessorDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfessorDropdownOpen]);
+
+  const toggleProfessor = (professorId: number) => {
+    setSelectedProfessors(prev => 
+      prev.includes(professorId)
+        ? prev.filter(id => id !== professorId)
+        : [...prev, professorId]
+    );
+  };
+
+  const toggleAllProfessors = () => {
+    if (selectedProfessors.length === professors.length) {
+      setSelectedProfessors([]);
+    } else {
+      setSelectedProfessors(professors.map(p => p.id));
+    }
+  };
 
   const handleMarkAsPaid = async (paymentId: number) => {
     try {
@@ -92,8 +131,13 @@ export const Billing: React.FC = () => {
   };
 
   const filteredPayments = payments.filter(p => {
-    if (filter === 'all') return true;
-    return p.status === filter;
+    // Filter by status
+    if (filter !== 'all' && p.status !== filter) return false;
+    
+    // Filter by professor
+    if (selectedProfessors.length > 0 && !selectedProfessors.includes(p.professor_id)) return false;
+    
+    return true;
   });
 
   const stats = {
@@ -202,6 +246,58 @@ export const Billing: React.FC = () => {
         >
           Atrasados ({payments.filter(p => p.status === 'ATRASADO').length})
         </button>
+
+        <div className="professor-filter">
+          <button
+            className="professor-filter-button"
+            onClick={() => setIsProfessorDropdownOpen(!isProfessorDropdownOpen)}
+          >
+            <i className="fa-solid fa-chalkboard-user"></i>
+            Professores
+            {selectedProfessors.length > 0 && (
+              <span className="filter-count">({selectedProfessors.length})</span>
+            )}
+            <i className={`fa-solid fa-chevron-${isProfessorDropdownOpen ? 'up' : 'down'}`}></i>
+          </button>
+
+          {isProfessorDropdownOpen && (
+            <div className="professor-dropdown">
+              <div className="dropdown-header">
+                <label className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={selectedProfessors.length === professors.length}
+                    onChange={toggleAllProfessors}
+                  />
+                  <span>Todos os Professores</span>
+                </label>
+              </div>
+              <div className="dropdown-list">
+                {professors.map(prof => (
+                  <label key={prof.id} className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedProfessors.includes(prof.id)}
+                      onChange={() => toggleProfessor(prof.id)}
+                    />
+                    <span>{prof.nome}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedProfessors.length > 0 && (
+                <div className="dropdown-footer">
+                  <button
+                    className="clear-all-btn"
+                    onClick={() => setSelectedProfessors([])}
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                    Limpar Filtro
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {loading && <div className="loading">Carregando...</div>}

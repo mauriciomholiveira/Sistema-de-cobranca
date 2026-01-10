@@ -93,3 +93,13 @@ export interface DashboardMetrics {
   totalAtrasado: number;
   totalPago: number;
 }
+
+export interface ProfessorMetric {
+  id: number;
+  nome: string;
+  total_alunos: number;
+  a_receber: number;
+  paga_igreja: number;
+  pendencias: number;
+  previsao_total: number;
+}

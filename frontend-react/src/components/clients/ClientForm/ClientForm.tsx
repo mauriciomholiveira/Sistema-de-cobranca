@@ -50,7 +50,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
         loadEnrollments();
       }
     } else {
-      setFormData({ nome: '', endereco: '', whatsapp: '' });
+      setFormData({ nome: '', endereco: '', whatsapp: '+55 ' });
       setEnrollments([]);
       setPendingEnrollments([]);
     }
@@ -130,6 +130,31 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
     });
   };
 
+  const formatWhatsApp = (value: string) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, '');
+    
+    // Se começar com 55, remove para não duplicar
+    const cleanNumbers = numbers.startsWith('55') ? numbers.slice(2) : numbers;
+    
+    // Limita a 11 dígitos (DDD + número)
+    const limited = cleanNumbers.slice(0, 11);
+    
+    // Aplica máscara: +55 (XX) XXXXX-XXXX ou +55 (XX) XXXX-XXXX
+    if (limited.length === 0) return '+55 ';
+    if (limited.length <= 2) return `+55 (${limited}`;
+    if (limited.length <= 7) return `+55 (${limited.slice(0, 2)}) ${limited.slice(2)}`;
+    if (limited.length <= 11) {
+      return `+55 (${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+    }
+    return `+55 (${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7, 11)}`;
+  };
+
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatWhatsApp(e.target.value);
+    setFormData({ ...formData, whatsapp: formatted });
+  };
+
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} title={clientId ? 'Editar Cliente' : 'Novo Cliente'}>
@@ -159,7 +184,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
             <input
               type="text"
               value={formData.whatsapp}
-              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              onChange={handleWhatsAppChange}
               placeholder="+55 (48) 99999-9999"
               required
             />
