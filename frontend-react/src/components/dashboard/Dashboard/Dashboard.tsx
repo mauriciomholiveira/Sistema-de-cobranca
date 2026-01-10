@@ -75,11 +75,13 @@ export const Dashboard: React.FC = () => {
   };
 
   const formatValue = (value: number) => {
-    return valuesVisible ? `R$ ${value.toFixed(2)}` : 'R$ ••••••';
+    const numValue = Number(value);
+    return valuesVisible ? `R$ ${numValue.toFixed(2)}` : 'R$ ••••••';
   };
 
   const formatNumber = (value: number) => {
-    return valuesVisible ? value.toString() : '••';
+    const numValue = Number(value);
+    return valuesVisible ? numValue.toString() : '••';
   };
 
   if (loading) {
