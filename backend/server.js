@@ -51,7 +51,7 @@ app.get('/api/dashboard', async (req, res) => {
             [mes]
         );
 
-        // Revenue by Professor (This Month) - ALL payments
+        // Revenue by Professor (This Month) - Only PAID
         const receitaProfessor = await db.query(`
             SELECT 
                 p.nome, 
@@ -60,7 +60,7 @@ app.get('/api/dashboard', async (req, res) => {
             FROM pagamentos pg
             JOIN clientes c ON pg.cliente_id = c.id
             LEFT JOIN professores p ON pg.professor_id = p.id
-            WHERE pg.mes_ref = $1
+            WHERE pg.status = 'PAGO' AND pg.mes_ref = $1
             GROUP BY p.nome
         `, [mes]);
 

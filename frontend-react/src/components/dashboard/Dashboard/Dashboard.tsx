@@ -60,17 +60,30 @@ export const Dashboard: React.FC = () => {
     <div className="dashboard-container">
       <h2>Dashboard</h2>
       
-      <div className="dashboard-grid">
-        <div className="metric-card">
-          <div className="metric-icon">
-            <i className="fa-solid fa-users"></i>
+      {/* Forecast card - First */}
+      <div className="forecast-card-top">
+        <div className="forecast-header">
+          <i className="fa-solid fa-chart-line"></i>
+          <h3>Previsões do Mês</h3>
+        </div>
+        <div className="forecast-grid-content">
+          <div className="forecast-item total">
+            <span className="forecast-label">Previsão Total</span>
+            <span className="forecast-value">R$ {Number(data.previsao_total).toFixed(2)}</span>
           </div>
-          <div className="metric-content">
-            <h3>Total Alunos</h3>
-            <p className="metric-value">{data.alunos}</p>
+          <div className="forecast-item professor">
+            <span className="forecast-label">Previsão Professores</span>
+            <span className="forecast-value">R$ {Number(data.total_professores).toFixed(2)}</span>
+          </div>
+          <div className="forecast-item church">
+            <span className="forecast-label">Previsão Igreja</span>
+            <span className="forecast-value">R$ {Number(data.total_igreja).toFixed(2)}</span>
           </div>
         </div>
+      </div>
 
+      {/* Main metrics grid - Middle */}
+      <div className="metrics-grid">
         <div className="metric-card success">
           <div className="metric-icon">
             <i className="fa-solid fa-check-circle"></i>
@@ -91,32 +104,12 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="metric-card danger">
-          <div className="metric-icon">
-            <i className="fa-solid fa-exclamation-triangle"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Atrasados</h3>
-            <p className="metric-value">{data.atrasados}</p>
-          </div>
-        </div>
-
-        <div className="metric-card primary">
-          <div className="metric-icon">
-            <i className="fa-solid fa-chart-line"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Previsão Total</h3>
-            <p className="metric-value">R$ {Number(data.previsao_total).toFixed(2)}</p>
-          </div>
-        </div>
-
         <div className="metric-card professor">
           <div className="metric-icon">
             <i className="fa-solid fa-chalkboard-user"></i>
           </div>
           <div className="metric-content">
-            <h3>Total Professores</h3>
+            <h3>Total Pago Professores</h3>
             <p className="metric-value">R$ {Number(data.total_professores).toFixed(2)}</p>
           </div>
         </div>
@@ -126,8 +119,18 @@ export const Dashboard: React.FC = () => {
             <i className="fa-solid fa-church"></i>
           </div>
           <div className="metric-content">
-            <h3>Total Igreja</h3>
+            <h3>Total Pago Igreja</h3>
             <p className="metric-value">R$ {Number(data.total_igreja).toFixed(2)}</p>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon">
+            <i className="fa-solid fa-users"></i>
+          </div>
+          <div className="metric-content">
+            <h3>Total Alunos</h3>
+            <p className="metric-value">{data.alunos}</p>
           </div>
         </div>
 
@@ -140,9 +143,19 @@ export const Dashboard: React.FC = () => {
             <p className="metric-value">{data.isentos}</p>
           </div>
         </div>
+
+        <div className="metric-card danger">
+          <div className="metric-icon">
+            <i className="fa-solid fa-exclamation-triangle"></i>
+          </div>
+          <div className="metric-content">
+            <h3>Atrasados</h3>
+            <p className="metric-value">{data.atrasados}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Professor Metrics Section */}
+      {/* Professor Metrics Table */}
       {professorMetrics.length > 0 && (
         <div className="professor-metrics-section">
           <h3>Métricas por Professor</h3>
