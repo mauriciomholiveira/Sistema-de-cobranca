@@ -363,8 +363,10 @@ app.get('/api/cobranca', async (req, res) => {
             WHERE m.active = TRUE 
             AND c.active = TRUE
             AND NOT EXISTS (
-                SELECT 1 FROM pagamentos 
-                WHERE matricula_id = m.id AND mes_ref = $1::varchar
+                SELECT 1 FROM pagamentos p
+                WHERE p.cliente_id = m.cliente_id 
+                AND p.curso_id = m.curso_id
+                AND p.mes_ref = $1::varchar
             )
         `, [mes]);
 
