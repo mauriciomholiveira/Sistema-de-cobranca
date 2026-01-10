@@ -38,6 +38,19 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
     fetchResources();
   }, [fetchResources]);
 
+  // Auto-calculate church value when monthly fee or professor value changes
+  useEffect(() => {
+    if (enrollmentForm.valor_mensalidade > 0) {
+      const churchValue = enrollmentForm.valor_mensalidade - enrollmentForm.valor_professor;
+      if (churchValue !== enrollmentForm.valor_igreja) {
+        setEnrollmentForm(prev => ({
+          ...prev,
+          valor_igreja: Math.max(0, churchValue)
+        }));
+      }
+    }
+  }, [enrollmentForm.valor_mensalidade, enrollmentForm.valor_professor]);
+
   useEffect(() => {
     if (clientId) {
       const client = clients.find(c => c.id === clientId);
@@ -327,8 +340,13 @@ export const ClientForm: React.FC<ClientFormProps> = ({ isOpen, onClose, clientI
                 type="number"
                 step="0.01"
                 value={enrollmentForm.valor_igreja}
-                onChange={(e) => setEnrollmentForm({ ...enrollmentForm, valor_igreja: Number(e.target.value) })}
+                readOnly
+                disabled
+                style={{ backgroundColor: '#1e293b', cursor: 'not-allowed' }}
               />
+              <small style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                Calculado automaticamente: Mensalidade - Professor
+              </small>
             </div>
           </div>
 
