@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const db = require('./src/database/db');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,7 +11,11 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('../frontend'));
+// app.use(express.static('../frontend')); // Legacy frontend disabled
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Sistema de Cobrança API Running 🚀' });
+});
 
 // Template API
 app.get('/api/templates/:type', (req, res) => {
@@ -121,37 +126,56 @@ app.get('/api/dashboard/professores', async (req, res) => {
 });
 
 // 2. Auxiliares (Professores/Cursos/Templates)
+// 1. Professores
 app.get('/api/professores', async (req, res) => {
-    const result = await db.query('SELECT * FROM professores WHERE active = TRUE ORDER BY nome');
+    // Return all fields except password
+    const result = await db.query('SELECT id, nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, active FROM professores WHERE active = TRUE ORDER BY nome');
     res.json(result.rows);
 });
 
 app.post('/api/professores', async (req, res) => {
-    const { nome, pix, cpf, contato, endereco, dados_bancarios } = req.body;
-    await db.query(
-        'INSERT INTO professores (nome, pix, cpf, contato, endereco, dados_bancarios) VALUES ($1, $2, $3, $4, $5, $6)', 
-        [nome, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null]
-    );
-    res.status(201).send();
+    const { nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha } = req.body;
+    
+    let passwordHash = null;
+    if (senha) {
+        passwordHash = await bcrypt.hash(senha, 10);
+    }
+
+    try {
+        await db.query(
+            'INSERT INTO professores (nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', 
+            [nome, email, data_nascimento, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null, passwordHash]
+        );
+        res.status(201).send();
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao criar professor' });
+    }
 });
 
 app.put('/api/professores/:id', async (req, res) => {
     const { id } = req.params;
-    const { nome, pix, active, cpf, contato, endereco, dados_bancarios } = req.body;
+    const { nome, email, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha, active } = req.body;
 
     const fields = [];
     const values = [];
     let idx = 1;
 
     if (nome !== undefined) { fields.push(`nome = $${idx++}`); values.push(nome); }
+    if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email); }
+    if (data_nascimento !== undefined) { fields.push(`data_nascimento = $${idx++}`); values.push(data_nascimento); }
     if (pix !== undefined) { fields.push(`pix = $${idx++}`); values.push(pix); }
-    if (active !== undefined) { fields.push(`active = $${idx++}`); values.push(active); }
-    
-    // New fields
     if (cpf !== undefined) { fields.push(`cpf = $${idx++}`); values.push(cpf); }
     if (contato !== undefined) { fields.push(`contato = $${idx++}`); values.push(contato); }
     if (endereco !== undefined) { fields.push(`endereco = $${idx++}`); values.push(endereco); }
     if (dados_bancarios !== undefined) { fields.push(`dados_bancarios = $${idx++}`); values.push(dados_bancarios); }
+    if (active !== undefined) { fields.push(`active = $${idx++}`); values.push(active); }
+
+    if (senha) {
+        const hash = await bcrypt.hash(senha, 10);
+        fields.push(`senha = $${idx++}`);
+        values.push(hash);
+    }
 
     if (fields.length === 0) return res.status(400).send('No fields to update');
 

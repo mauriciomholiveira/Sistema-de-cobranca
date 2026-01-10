@@ -17,7 +17,7 @@ export const Management: React.FC = () => {
   // Professor state
   const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
   const [editingProfessorId, setEditingProfessorId] = useState<number | null>(null);
-  const [professorForm, setProfessorForm] = useState({ nome: '' });
+  const [professorForm, setProfessorForm] = useState<any>({ nome: '', email: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
   
   // Template state
   const [templates, setTemplates] = useState<any[]>([]);
@@ -85,11 +85,22 @@ export const Management: React.FC = () => {
     if (professorId) {
       const professor = professors.find(p => p.id === professorId);
       if (professor) {
-        setProfessorForm({ nome: professor.nome });
+        setProfessorForm({ 
+          nome: professor.nome,
+          email: professor.email || '',
+          data_nascimento: professor.data_nascimento ? professor.data_nascimento.split('T')[0] : '', // Format date for input
+          pix: professor.pix || '',
+          cpf: professor.cpf || '',
+          contato: professor.contato || '',
+          endereco: professor.endereco || '',
+          dados_bancarios: professor.dados_bancarios || '',
+          senha: '',
+          confirmSenha: ''
+        });
         setEditingProfessorId(professorId);
       }
     } else {
-      setProfessorForm({ nome: '' });
+      setProfessorForm({ nome: '', email: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
       setEditingProfessorId(null);
     }
     setIsProfessorModalOpen(true);
@@ -97,6 +108,11 @@ export const Management: React.FC = () => {
 
   const handleSaveProfessor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (professorForm.senha !== professorForm.confirmSenha) {
+      alert('As senhas não coincidem!');
+      return;
+    }
+
     try {
       if (editingProfessorId) {
         await api.put(`/professores/${editingProfessorId}`, professorForm);
@@ -328,10 +344,111 @@ export const Management: React.FC = () => {
             <input
               type="text"
               value={professorForm.nome}
-              onChange={(e) => setProfessorForm({ nome: e.target.value })}
+              onChange={(e) => setProfessorForm({ ...professorForm, nome: e.target.value })}
               required
             />
           </div>
+          
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={professorForm.email || ''}
+              onChange={(e) => setProfessorForm({ ...professorForm, email: e.target.value })}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Data de Nascimento</label>
+              <input
+                type="date"
+                value={professorForm.data_nascimento || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, data_nascimento: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>CPF</label>
+              <input
+                type="text"
+                value={professorForm.cpf || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, cpf: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+             <div className="form-group">
+              <label>Chave Pix</label>
+              <input
+                type="text"
+                value={professorForm.pix || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, pix: e.target.value })}
+              />
+            </div>
+             <div className="form-group">
+              <label>Contato</label>
+              <input
+                type="text"
+                value={professorForm.contato || ''}
+                onChange={(e) => setProfessorForm({ ...professorForm, contato: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Endereço</label>
+            <input
+              type="text"
+              value={professorForm.endereco || ''}
+              onChange={(e) => setProfessorForm({ ...professorForm, endereco: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Dados Bancários (Completo)</label>
+            <textarea
+              rows={3}
+              value={professorForm.dados_bancarios || ''}
+              onChange={(e) => setProfessorForm({ ...professorForm, dados_bancarios: e.target.value })}
+              placeholder="Agência, Conta, Banco..."
+            />
+          </div>
+
+          {!editingProfessorId && (
+            <>
+              <div className="form-group">
+                <label>Senha</label>
+                <input
+                  type="password"
+                  value={professorForm.senha || ''}
+                  onChange={(e) => setProfessorForm({ ...professorForm, senha: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirmar Senha</label>
+                <input
+                  type="password"
+                  value={professorForm.confirmSenha || ''}
+                  onChange={(e) => setProfessorForm({ ...professorForm, confirmSenha: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+
+           {editingProfessorId && (
+            <>
+              <div className="form-group">
+                <label>Nova Senha (deixe em branco para manter)</label>
+                <input
+                  type="password"
+                  value={professorForm.senha || ''}
+                  onChange={(e) => setProfessorForm({ ...professorForm, senha: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+
           <div className="form-actions">
             <Button type="button" variant="secondary" onClick={() => setIsProfessorModalOpen(false)}>
               Cancelar

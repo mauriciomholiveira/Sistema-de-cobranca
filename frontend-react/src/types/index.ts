@@ -74,6 +74,13 @@ export interface Course {
 export interface Professor {
   id: number;
   nome: string;
+  email?: string;
+  data_nascimento?: string;
+  pix?: string;
+  cpf?: string;
+  contato?: string;
+  endereco?: string;
+  dados_bancarios?: string;
   active: boolean;
 }
 
