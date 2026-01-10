@@ -74,6 +74,14 @@ export const Dashboard: React.FC = () => {
     return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
+  const formatValue = (value: number) => {
+    return valuesVisible ? `R$ ${value.toFixed(2)}` : 'R$ ••••••';
+  };
+
+  const formatNumber = (value: number) => {
+    return valuesVisible ? value.toString() : '••';
+  };
+
   if (loading) {
     return (
       <div className="dashboard-container">
