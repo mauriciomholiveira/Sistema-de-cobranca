@@ -25,17 +25,33 @@ interface ProfessorReport {
   total_cobrancas: number;
 }
 
+interface GlobalTotals {
+  total_alunos_ativos: number;
+  total_alunos_inativos: number;
+  total_mes: number;
+  total_pago: number;
+  total_pendente: number;
+  igreja_recebido: number;
+}
+
+interface ReportsResponse {
+  totals: GlobalTotals;
+  professors: ProfessorReport[];
+}
+
 export const Reports: React.FC = () => {
   const { user } = useAuth();
   const [reports, setReports] = useState<ProfessorReport[]>([]);
+  const [globalTotals, setGlobalTotals] = useState<GlobalTotals | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const fetchReports = useCallback(async (month: string) => {
     setLoading(true);
     try {
-      const data = await api.get<ProfessorReport[]>(`/relatorios/professores?mes=${month}`);
-      setReports(data);
+      const data = await api.get<ReportsResponse>(`/relatorios/professores?mes=${month}`);
+      setReports(data.professors);
+      setGlobalTotals(data.totals);
     } catch (err) {
       console.error('Erro ao carregar relatórios:', err);
     } finally {
@@ -70,32 +86,6 @@ export const Reports: React.FC = () => {
     }).format(Number(value));
   };
 
-  // Calculate totals
-  const totals = reports.reduce((acc, r) => ({
-    alunos_ativos: acc.alunos_ativos + Number(r.alunos_ativos),
-    alunos_inativos: acc.alunos_inativos + Number(r.alunos_inativos),
-    total_mes: acc.total_mes + Number(r.total_mes),
-    total_pago: acc.total_pago + Number(r.total_pago),
-    total_pendente: acc.total_pendente + Number(r.total_pendente),
-    total_atrasado: acc.total_atrasado + Number(r.total_atrasado),
-    qtd_atrasados: acc.qtd_atrasados + Number(r.qtd_atrasados),
-    professor_recebido: acc.professor_recebido + Number(r.professor_recebido),
-    professor_total: acc.professor_total + Number(r.professor_total),
-    igreja_recebido: acc.igreja_recebido + Number(r.igreja_recebido),
-    igreja_total: acc.igreja_total + Number(r.igreja_total),
-  }), {
-    alunos_ativos: 0,
-    alunos_inativos: 0,
-    total_mes: 0,
-    total_pago: 0,
-    total_pendente: 0,
-    total_atrasado: 0,
-    qtd_atrasados: 0,
-    professor_recebido: 0,
-    professor_total: 0,
-    igreja_recebido: 0,
-    igreja_total: 0,
-  });
 
   if (!user?.is_admin) {
     return (
@@ -151,7 +141,7 @@ export const Reports: React.FC = () => {
           </div>
           <div className="summary-content">
             <h3>Alunos Ativos</h3>
-            <p className="summary-value">{totals.alunos_ativos}</p>
+            <p className="summary-value">{globalTotals?.total_alunos_ativos ?? 0}</p>
           </div>
         </div>
 
@@ -161,7 +151,7 @@ export const Reports: React.FC = () => {
           </div>
           <div className="summary-content">
             <h3>Total Recebido</h3>
-            <p className="summary-value">{formatCurrency(totals.total_pago)}</p>
+            <p className="summary-value">{formatCurrency(Number(globalTotals?.total_pago ?? 0))}</p>
           </div>
         </div>
 
@@ -171,7 +161,7 @@ export const Reports: React.FC = () => {
           </div>
           <div className="summary-content">
             <h3>A Receber</h3>
-            <p className="summary-value">{formatCurrency(totals.total_pendente + totals.total_atrasado)}</p>
+            <p className="summary-value">{formatCurrency(Number(globalTotals?.total_pendente ?? 0))}</p>
           </div>
         </div>
 
@@ -181,7 +171,7 @@ export const Reports: React.FC = () => {
           </div>
           <div className="summary-content">
             <h3>Repasse Igreja</h3>
-            <p className="summary-value">{formatCurrency(totals.igreja_recebido)}</p>
+            <p className="summary-value">{formatCurrency(Number(globalTotals?.igreja_recebido ?? 0))}</p>
           </div>
         </div>
       </div>

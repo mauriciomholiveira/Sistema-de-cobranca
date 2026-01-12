@@ -1086,7 +1086,21 @@ app.get('/api/relatorios/professores', authenticateToken, async (req, res) => {
             ORDER BY p.nome
         `, [mes]);
 
-        res.json(result.rows);
+        // Get global totals for unique students
+        const totalsResult = await db.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM clientes WHERE active = true) as total_alunos_ativos,
+                (SELECT COUNT(*) FROM clientes WHERE active = false) as total_alunos_inativos,
+                COALESCE((SELECT SUM(valor_cobrado) FROM pagamentos WHERE mes_ref = $1), 0) as total_mes,
+                COALESCE((SELECT SUM(valor_cobrado) FROM pagamentos WHERE mes_ref = $1 AND status = 'PAGO'), 0) as total_pago,
+                COALESCE((SELECT SUM(valor_cobrado) FROM pagamentos WHERE mes_ref = $1 AND status IN ('PENDENTE', 'ATRASADO')), 0) as total_pendente,
+                COALESCE((SELECT SUM(valor_igreja_recebido) FROM pagamentos WHERE mes_ref = $1 AND status = 'PAGO'), 0) as igreja_recebido
+        `, [mes]);
+
+        res.json({
+            totals: totalsResult.rows[0],
+            professors: result.rows
+        });
     } catch (err) {
         console.error('Erro ao buscar relatório de professores:', err);
         res.status(500).json({ error: 'Erro ao buscar relatório' });

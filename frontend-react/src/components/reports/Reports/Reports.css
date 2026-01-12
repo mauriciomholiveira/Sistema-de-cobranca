@@ -151,27 +151,27 @@
 .card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
   background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
   border-bottom: 1px solid #4338ca;
 }
 
 .professor-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
 }
 
 .professor-info h3 {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 0.25rem;
@@ -191,7 +191,7 @@
 
 /* Card Sections */
 .card-section {
-  padding: 1.25rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid #334155;
 }
 
@@ -208,7 +208,7 @@
   letter-spacing: 1px;
   color: #64748b;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .section-title i {
@@ -235,7 +235,7 @@
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
@@ -259,7 +259,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 10px;
   background: #0f172a;
   border: 1px solid #1e293b;
@@ -343,8 +343,8 @@
 
 .earning-item {
   background: #0f172a;
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
 }
 
 .earning-item.professor {
@@ -389,7 +389,7 @@
 }
 
 .earning-received {
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #ffffff;
 }
@@ -404,7 +404,7 @@
 .card-footer {
   display: flex;
   justify-content: space-around;
-  padding: 1rem 1.25rem;
+  padding: 0.65rem 1rem;
   background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
   border-top: 1px solid #1e293b;
 }
@@ -417,7 +417,7 @@
 }
 
 .footer-count {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
