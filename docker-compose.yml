@@ -4,7 +4,6 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: postgres_cobranca
-    restart: unless-stopped
     environment:
       POSTGRES_USER: cobranca_user
       POSTGRES_PASSWORD: cobranca_pass
@@ -21,6 +20,49 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # Remove restart: unless-stopped to respect manual user control
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_cobranca
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=cobranca_user
+      - DB_PASSWORD=cobranca_pass
+      - DB_NAME=cobranca_db
+      - DB_PORT=5432
+      - PORT=3000
+      - JWT_SECRET=super_secret_jwt_key_123
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cobranca_network
+    # Hot reload enabled via 'npm run dev' inside container + bind mount
+
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile
+    container_name: frontend_cobranca
+    ports:
+      - "5175:5175"
+    volumes:
+      - ./frontend-react:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - cobranca_network
 
 volumes:
   postgres_data:

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useResources } from '../../../contexts/ResourceContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Modal } from '../../common/Modal';
 import { Button } from '../../common/Button';
 import { api } from '../../../services/api';
@@ -9,18 +10,54 @@ import type { AddressData, BankData } from '../../../utils/formatters';
 import './Management.css';
 
 export const Management: React.FC = () => {
+  const { user } = useAuth();
   const { courses, professors, fetchResources } = useResources();
-  const [activeTab, setActiveTab] = useState<'courses' | 'professors' | 'templates'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'professors' | 'templates' | 'settings'>('courses');
+  
+  // Settings state
+  const [settingsForm, setSettingsForm] = useState({
+    schoolName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  useEffect(() => {
+    // Load school name
+    const storedName = localStorage.getItem('premium_sys_school_name');
+    if (storedName) {
+      setSettingsForm(prev => ({ ...prev, schoolName: storedName }));
+    }
+    // Load user email if available
+    // We might need to fetch user details first if not in context
+    if (user && user.email) {
+       setSettingsForm(prev => ({ ...prev, email: user.email }));
+    }
+  }, [user]);
   
   // Course state
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [courseForm, setCourseForm] = useState({ nome: '', mensalidade_padrao: 0 });
   
+  
   // Professor state
   const [isProfessorModalOpen, setIsProfessorModalOpen] = useState(false);
   const [editingProfessorId, setEditingProfessorId] = useState<number | null>(null);
-  const [professorForm, setProfessorForm] = useState<any>({ nome: '', email: '', whatsapp: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+  const [professorForm, setProfessorForm] = useState<any>({ 
+    nome: '', 
+    email: '', 
+    whatsapp: '', 
+    data_nascimento: '', 
+    pix: '', 
+    cpf: '', 
+    contato: '', 
+    endereco: '', 
+    dados_bancarios: '', 
+    senha: '', 
+    confirmSenha: '',
+    can_send_messages: false // Initialize
+  });
   const [addressForm, setAddressForm] = useState<AddressData>(parseAddress(''));
   const [bankForm, setBankForm] = useState<BankData>(parseBankData(''));
   
@@ -90,6 +127,7 @@ export const Management: React.FC = () => {
     if (professorId) {
       const professor = professors.find(p => p.id === professorId);
       if (professor) {
+
         setProfessorForm({ 
           nome: professor.nome,
           email: professor.email || '',
@@ -101,14 +139,28 @@ export const Management: React.FC = () => {
           endereco: professor.endereco || '',
           dados_bancarios: professor.dados_bancarios || '',
           senha: '',
-          confirmSenha: ''
+          confirmSenha: '',
+          can_send_messages: professor.can_send_messages || false
         });
         setAddressForm(parseAddress(professor.endereco));
         setBankForm(parseBankData(professor.dados_bancarios));
         setEditingProfessorId(professorId);
       }
     } else {
-      setProfessorForm({ nome: '', email: '', whatsapp: '', data_nascimento: '', pix: '', cpf: '', contato: '', endereco: '', dados_bancarios: '', senha: '', confirmSenha: '' });
+      setProfessorForm({ 
+        nome: '', 
+        email: '', 
+        whatsapp: '', 
+        data_nascimento: '', 
+        pix: '', 
+        cpf: '', 
+        contato: '', 
+        endereco: '', 
+        dados_bancarios: '', 
+        senha: '', 
+        confirmSenha: '',
+        can_send_messages: false
+      });
       setAddressForm(parseAddress(''));
       setBankForm(parseBankData(''));
       setEditingProfessorId(null);
@@ -242,6 +294,13 @@ export const Management: React.FC = () => {
           <i className="fa-solid fa-message"></i>
           Templates
         </button>
+        <button
+          className={activeTab === 'settings' ? 'active' : ''}
+          onClick={() => setActiveTab('settings')}
+        >
+          <i className="fa-solid fa-user-gear"></i>
+          Minha Conta
+        </button>
       </div>
 
       {activeTab === 'courses' && (
@@ -284,7 +343,7 @@ export const Management: React.FC = () => {
           </div>
 
           <div className="items-grid">
-            {professors.filter(p => p.active).map(professor => (
+            {professors.filter(p => p.active && !p.is_admin).map(professor => ( 
               <div key={professor.id} className="item-card">
                 <div className="item-info">
                   <h4>{professor.nome}</h4>
@@ -333,7 +392,99 @@ export const Management: React.FC = () => {
         </div>
       )}
 
-      {/* Course Modal */}
+      {activeTab === 'settings' && (
+        <div className="tab-content">
+          <div className="content-header">
+            <h3>Dados da Escola & Administrador</h3>
+          </div>
+          
+          <div className="settings-container">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              
+              if (settingsForm.password && settingsForm.password !== settingsForm.confirmPassword) {
+                alert('As senhas não coincidem!');
+                return;
+              }
+
+              try {
+                // 1. Save School Name Local
+                if (settingsForm.schoolName) {
+                  localStorage.setItem('premium_sys_school_name', settingsForm.schoolName);
+                  // Dispatch event so Sidebar updates immediately
+                  window.dispatchEvent(new Event('school_name_updated'));
+                }
+
+                // 2. Update Admin User (Email/Pass) via API
+                const payload: any = {};
+                if (settingsForm.email) payload.email = settingsForm.email;
+                if (settingsForm.password) payload.senha = settingsForm.password;
+
+                if (user?.id && (payload.email || payload.password)) {
+                  await api.put(`/professores/${user.id}`, payload);
+                }
+
+                alert('Configurações salvas com sucesso!');
+                setSettingsForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
+              } catch (err) {
+                console.error(err);
+                alert('Erro ao salvar configurações.');
+              }
+            }} className="management-form" style={{ maxWidth: '600px' }}>
+              
+              <div className="form-group">
+                <label>Nome da Escola (Exibido no Menu)</label>
+                <input
+                  type="text"
+                  value={settingsForm.schoolName}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, schoolName: e.target.value })}
+                  placeholder="Minha Escola de Música"
+                />
+              </div>
+
+              <div className="section-divider">
+                <span>Dados de Acesso (Admin)</span>
+              </div>
+
+              <div className="form-group">
+                <label>Email de Login</label>
+                <input
+                  type="email"
+                  value={settingsForm.email}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, email: e.target.value })}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nova Senha</label>
+                  <input
+                    type="password"
+                    value={settingsForm.password}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, password: e.target.value })}
+                    placeholder="Deixe em branco para manter"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Confirmar Nova Senha</label>
+                  <input
+                    type="password"
+                    value={settingsForm.confirmPassword}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, confirmPassword: e.target.value })}
+                    placeholder="Repita a senha"
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <Button type="submit" variant="primary">
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <Modal
         isOpen={isCourseModalOpen}
         onClose={() => setIsCourseModalOpen(false)}
@@ -442,6 +593,21 @@ export const Management: React.FC = () => {
                 value={professorForm.contato || ''}
                 onChange={(e) => setProfessorForm({ ...professorForm, contato: e.target.value })}
               />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+              <input
+                type="checkbox"
+                id="can_send_messages"
+                checked={professorForm.can_send_messages}
+                onChange={(e) => setProfessorForm({ ...professorForm, can_send_messages: e.target.checked })}
+                style={{ width: 'auto', margin: 0 }}
+              />
+              <label htmlFor="can_send_messages" style={{ margin: 0, fontWeight: 'normal' }}>
+                Permitir envio de mensagens de cobrança (WhatsApp)
+              </label>
             </div>
           </div>
 

@@ -41,9 +41,16 @@ export const billingService = {
    * Marks a payment as paid
    */
   async markAsPaid(id: number): Promise<void> {
+    // Get today's date in local format YYYY-MM-DD to avoid timezone issues
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const localDate = `${year}-${month}-${day}`;
+    
     return this.updatePaymentStatus(id, {
       status: 'PAGO',
-      data_pagamento: new Date().toISOString(),
+      data_pagamento: localDate,
     });
   },
 

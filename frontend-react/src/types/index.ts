@@ -42,12 +42,13 @@ export interface EnrollmentFormData {
 export interface Payment {
   id: number;
   cliente_id: number;
+  professor_id: number;
   matricula_id: number;
   mes_ref: string;
   valor_cobrado: number;
   valor_professor_recebido: number;
   valor_igreja_recebido: number;
-  status: 'PAGO' | 'PENDENTE' | 'ATRASADO';
+  status: 'PAGO' | 'PENDENTE' | 'ATRASADO' | 'ISENTO';
   data_pagamento?: string;
   data_vencimento: string;
   nome: string;
@@ -83,6 +84,8 @@ export interface Professor {
   endereco?: string;
   dados_bancarios?: string;
   active: boolean;
+  is_admin?: boolean;
+  can_send_messages?: boolean;
 }
 
 // Template types

@@ -94,7 +94,6 @@
   margin: 0;
 }
 
-
 /* Month Navigation */
 .month-selector {
   display: flex;
@@ -386,6 +385,11 @@
   color: #ef4444;
 }
 
+.status-badge.isento {
+  background: rgba(100, 116, 139, 0.2);
+  color: #64748b;
+}
+
 .actions {
   display: flex;
   gap: 0.5rem;
@@ -404,12 +408,12 @@
 }
 
 .btn-icon.whatsapp {
-  color: #25D366;
+  color: #25d366;
 }
 
 .btn-icon.whatsapp:hover {
   background: rgba(37, 211, 102, 0.2);
-  border-color: #25D366;
+  border-color: #25d366;
 }
 
 .btn-icon.whatsapp.danger {
@@ -498,4 +502,3 @@
   justify-content: flex-end;
   margin-top: 1rem;
 }
-

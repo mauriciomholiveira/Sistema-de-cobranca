@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useBilling } from '../../../contexts/BillingContext';
 import { useResources } from '../../../contexts/ResourceContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -8,13 +9,15 @@ import { billingService } from '../../../services/billingService';
 import { whatsappService, type MessageType } from '../../../services/whatsappService';
 import type { Payment, PaymentFormData } from '../../../types';
 import { formatMonthYear } from '../../../utils/dateUtils';
+import { formatDate } from '../../../utils/formatters';
 import './Billing.css';
 
 export const Billing: React.FC = () => {
+  const { user } = useAuth();
   const { payments, loading, currentMonth, setCurrentMonth, fetchPayments, markAsPaid } = useBilling();
   const { professors, fetchResources } = useResources();
   const { showToast } = useToast();
-  const [filter, setFilter] = useState<'all' | 'PAGO' | 'PENDENTE' | 'ATRASADO'>('all');
+  const [filter, setFilter] = useState<'all' | 'PAGO' | 'PENDENTE' | 'ATRASADO' | 'ISENTO'>('all');
   const [selectedProfessors, setSelectedProfessors] = useState<number[]>([]);
   const [isProfessorDropdownOpen, setIsProfessorDropdownOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -169,6 +172,7 @@ export const Billing: React.FC = () => {
       case 'PAGO': return 'success';
       case 'PENDENTE': return 'warning';
       case 'ATRASADO': return 'danger';
+      case 'ISENTO': return 'isento';
       default: return '';
     }
   };
@@ -178,6 +182,7 @@ export const Billing: React.FC = () => {
       case 'PAGO': return 'Pago';
       case 'PENDENTE': return 'Pendente';
       case 'ATRASADO': return 'Atrasado';
+      case 'ISENTO': return 'Isento';
       default: return status;
     }
   };
@@ -280,6 +285,12 @@ export const Billing: React.FC = () => {
         >
           Atrasados ({payments.filter(p => p.status === 'ATRASADO').length})
         </button>
+        <button
+          className={filter === 'ISENTO' ? 'active' : ''}
+          onClick={() => setFilter('ISENTO')}
+        >
+          Isentos ({payments.filter(p => p.status === 'ISENTO').length})
+        </button>
 
         <div className="professor-filter">
           <button
@@ -365,27 +376,29 @@ export const Billing: React.FC = () => {
                 </td>
                 <td>
                   {payment.data_pagamento
-                    ? new Date(payment.data_pagamento).toLocaleDateString('pt-BR')
+                    ? formatDate(payment.data_pagamento)
                     : '-'}
                 </td>
                 <td className="actions">
-                  <button
-                    className="btn-icon"
-                    onClick={() => handleOpenEditModal(payment)}
-                    title="Editar valores"
-                  >
-                    <i className="fa-solid fa-pen"></i>
-                  </button>
-                  {payment.status === 'PAGO' ? (
+                  {user?.is_admin && (
                     <button
-                      className="btn-icon warning"
-                      onClick={() => handleMarkAsPending(payment.id)}
-                      title="Reverter para Pendente"
+                      className="btn-icon"
+                      onClick={() => handleOpenEditModal(payment)}
+                      title="Editar valores"
                     >
-                      <i className="fa-solid fa-rotate-left"></i>
+                      <i className="fa-solid fa-pen"></i>
                     </button>
-                  ) : (
-                    <>
+                  )}
+                  {user?.is_admin && (
+                    payment.status === 'PAGO' ? (
+                      <button
+                        className="btn-icon warning"
+                        onClick={() => handleMarkAsPending(payment.id)}
+                        title="Reverter para Pendente"
+                      >
+                        <i className="fa-solid fa-rotate-left"></i>
+                      </button>
+                    ) : (
                       <button
                         className="btn-icon success"
                         onClick={() => handleMarkAsPaid(payment.id)}
@@ -393,28 +406,42 @@ export const Billing: React.FC = () => {
                       >
                         <i className="fa-solid fa-check"></i>
                       </button>
-                      <button
-                        className="btn-icon whatsapp"
-                        onClick={() => handleSendWhatsApp(payment, 'lembrete')}
-                        title="Enviar Lembrete"
-                      >
-                        <i className="fa-solid fa-bell"></i>
-                      </button>
-                      <button
-                        className="btn-icon whatsapp"
-                        onClick={() => handleSendWhatsApp(payment, 'vencimento')}
-                        title="Vence Hoje"
-                      >
-                        <i className="fa-solid fa-calendar-day"></i>
-                      </button>
-                      <button
-                        className="btn-icon whatsapp danger"
-                        onClick={() => handleSendWhatsApp(payment, 'atraso')}
-                        title="Vencido"
-                      >
-                        <i className="fa-solid fa-exclamation-circle"></i>
-                      </button>
-                    </>
+                    )
+                  )}
+
+
+                  {payment.status !== 'PAGO' && (
+                    <button
+                      className="btn-icon whatsapp"
+                      onClick={() => handleSendWhatsApp(payment, 'lembrete')}
+                      title={user?.is_admin || user?.can_send_messages ? "Enviar Lembrete" : "Sem permissão para enviar"}
+                      disabled={!user?.is_admin && !user?.can_send_messages}
+                      style={(!user?.is_admin && !user?.can_send_messages) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                      <i className="fa-solid fa-bell"></i>
+                    </button>
+                  )}
+                  {payment.status !== 'PAGO' && (
+                    <button
+                      className="btn-icon whatsapp"
+                      onClick={() => handleSendWhatsApp(payment, 'vencimento')}
+                      title={user?.is_admin || user?.can_send_messages ? "Vence Hoje" : "Sem permissão para enviar"}
+                      disabled={!user?.is_admin && !user?.can_send_messages}
+                      style={(!user?.is_admin && !user?.can_send_messages) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                      <i className="fa-solid fa-calendar-day"></i>
+                    </button>
+                  )}
+                  {payment.status !== 'PAGO' && (
+                    <button
+                      className="btn-icon whatsapp danger"
+                      onClick={() => handleSendWhatsApp(payment, 'atraso')}
+                      title={user?.is_admin || user?.can_send_messages ? "Vencido" : "Sem permissão para enviar"}
+                      disabled={!user?.is_admin && !user?.can_send_messages}
+                      style={(!user?.is_admin && !user?.can_send_messages) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                      <i className="fa-solid fa-exclamation-circle"></i>
+                    </button>
                   )}
                 </td>
               </tr>

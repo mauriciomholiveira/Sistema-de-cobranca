@@ -32,9 +32,16 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const markAsPaid = useCallback(async (paymentId: number) => {
     try {
+      // Get today's date in local format YYYY-MM-DD to avoid timezone issues
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const localDate = `${year}-${month}-${day}`;
+      
       await api.put(`/pagamentos/${paymentId}`, { 
         status: 'PAGO',
-        data_pagamento: new Date().toISOString()
+        data_pagamento: localDate
       });
       await fetchPayments(currentMonth);
     } catch (err) {

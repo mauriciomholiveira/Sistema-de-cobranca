@@ -12,9 +12,14 @@ interface DashboardData {
   a_receber: number;
   previsao_total: number;
   isentos: number;
-  total_professores: number;
-  total_igreja: number;
+  previsao_professores: number;
+  previsao_igreja: number;
+  total_professores_pago: number;
+  total_igreja_pago: number;
 }
+
+// ... (inside component)
+
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -142,87 +147,109 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="forecast-item professor">
             <span className="forecast-label">Previsão Professores</span>
-            <span className="forecast-value">{formatValue(data.total_professores)}</span>
+            <span className="forecast-value">{formatValue(data.previsao_professores)}</span>
           </div>
           <div className="forecast-item church">
             <span className="forecast-label">Previsão Igreja</span>
-            <span className="forecast-value">{formatValue(data.total_igreja)}</span>
+            <span className="forecast-value">{formatValue(data.previsao_igreja)}</span>
           </div>
         </div>
       </div>
 
-      {/* Financial metrics - 4 columns */}
-      <div className="financial-grid">
-        <div className="metric-card success">
-          <div className="metric-icon">
-            <i className="fa-solid fa-check-circle"></i>
+      {/* Main Grid: 3 Columns for Status, Distribution, Metrics */}
+      <div className="main-dashboard-grid">
+        
+        {/* Column 1: Financial Status */}
+        <div className="dashboard-section-column dashboard-column-card">
+          <div className="section-header">
+            <h3>Status Financeiro</h3>
           </div>
-          <div className="metric-content">
-            <h3>Recebido</h3>
-            <p className="metric-value">{formatValue(data.recebido)}</p>
+          <div className="status-grid">
+            <div className="metric-card success">
+              <div className="metric-icon">
+                <i className="fa-solid fa-check-circle"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Recebido</h3>
+                <p className="metric-value">{formatValue(data.recebido)}</p>
+              </div>
+            </div>
+
+            <div className="metric-card warning">
+              <div className="metric-icon">
+                <i className="fa-solid fa-clock"></i>
+              </div>
+              <div className="metric-content">
+                <h3>A Receber</h3>
+                <p className="metric-value">{formatValue(data.a_receber)}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="metric-card warning">
-          <div className="metric-icon">
-            <i className="fa-solid fa-clock"></i>
+        {/* Column 2: Distribution */}
+        <div className="dashboard-section-column dashboard-column-card">
+          <div className="section-header">
+            <h3>Distribuição Realizada</h3>
           </div>
-          <div className="metric-content">
-            <h3>A Receber</h3>
-            <p className="metric-value">{formatValue(data.a_receber)}</p>
+          <div className="distribution-grid">
+            <div className="metric-card professor">
+              <div className="metric-icon">
+                <i className="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Total Pago Professores</h3>
+                <p className="metric-value">{formatValue(data.total_professores_pago)}</p>
+              </div>
+            </div>
+
+            <div className="metric-card church">
+              <div className="metric-icon">
+                <i className="fa-solid fa-church"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Total Pago Igreja</h3>
+                <p className="metric-value">{formatValue(data.total_igreja_pago)}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="metric-card professor">
-          <div className="metric-icon">
-            <i className="fa-solid fa-chalkboard-user"></i>
+        {/* Column 3: General Metrics */}
+        <div className="dashboard-section-column dashboard-column-card">
+          <div className="section-header">
+            <h3>Métricas Gerais</h3>
           </div>
-          <div className="metric-content">
-            <h3>Total Pago Professores</h3>
-            <p className="metric-value">{formatValue(data.total_professores)}</p>
-          </div>
-        </div>
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <div className="metric-icon">
+                <i className="fa-solid fa-users"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Total Alunos</h3>
+                <p className="metric-value">{formatNumber(data.alunos)}</p>
+              </div>
+            </div>
 
-        <div className="metric-card church">
-          <div className="metric-icon">
-            <i className="fa-solid fa-church"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Total Pago Igreja</h3>
-            <p className="metric-value">{formatValue(data.total_igreja)}</p>
-          </div>
-        </div>
-      </div>
+            <div className="metric-card info">
+              <div className="metric-icon">
+                <i className="fa-solid fa-gift"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Isentos</h3>
+                <p className="metric-value">{formatNumber(data.isentos)}</p>
+              </div>
+            </div>
 
-      {/* Counter metrics - 3 columns */}
-      <div className="counter-grid">
-        <div className="metric-card">
-          <div className="metric-icon">
-            <i className="fa-solid fa-users"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Total Alunos</h3>
-            <p className="metric-value">{formatNumber(data.alunos)}</p>
-          </div>
-        </div>
-
-        <div className="metric-card info">
-          <div className="metric-icon">
-            <i className="fa-solid fa-gift"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Isentos</h3>
-            <p className="metric-value">{formatNumber(data.isentos)}</p>
-          </div>
-        </div>
-
-        <div className="metric-card danger">
-          <div className="metric-icon">
-            <i className="fa-solid fa-exclamation-triangle"></i>
-          </div>
-          <div className="metric-content">
-            <h3>Atrasados</h3>
-            <p className="metric-value">{formatNumber(data.atrasados)}</p>
+            <div className="metric-card danger">
+              <div className="metric-icon">
+                <i className="fa-solid fa-exclamation-triangle"></i>
+              </div>
+              <div className="metric-content">
+                <h3>Atrasados</h3>
+                <p className="metric-value">{formatNumber(data.atrasados)}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

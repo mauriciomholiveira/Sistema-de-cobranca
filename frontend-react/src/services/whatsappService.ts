@@ -16,11 +16,22 @@ export const whatsappService = {
     const valor = formatCurrency(Number(payment.valor_cobrado));
     const vencimento = formatDate(payment.data_vencimento);
     
-    // Calculate days late
+    // Calculate days late - parse date without timezone issues
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dueDate = new Date(payment.data_vencimento);
+    
+    // Parse due date without UTC conversion
+    const dueDateStr = payment.data_vencimento;
+    const dateMatch = dueDateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    let dueDate: Date;
+    if (dateMatch) {
+      const [, year, month, day] = dateMatch;
+      dueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dueDate = new Date(dueDateStr);
+    }
     dueDate.setHours(0, 0, 0, 0);
+    
     const diffTime = today.getTime() - dueDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useClients } from '../../../contexts/ClientContext';
 import { ClientForm } from '../ClientForm';
+import { parseAddress } from '../../../utils/formatters';
 import './ClientList.css';
 
 export const ClientList: React.FC = () => {
@@ -133,7 +134,20 @@ export const ClientList: React.FC = () => {
               <tr key={client.id}>
                 <td>{client.id}</td>
                 <td>{client.nome}</td>
-                <td>{client.endereco}</td>
+                <td>
+                  {(() => {
+                    const addr = parseAddress(client.endereco);
+                    if (addr.logradouro) {
+                      const parts = [addr.logradouro];
+                      if (addr.numero) parts[0] += `, ${addr.numero}`;
+                      if (addr.complemento) parts[0] += ` - ${addr.complemento}`;
+                      if (addr.bairro) parts.push(addr.bairro);
+                      if (addr.cidade && addr.uf) parts.push(`${addr.cidade}/${addr.uf}`);
+                      return parts.join(', ') || '-';
+                    }
+                    return '-';
+                  })()}
+                </td>
                 <td>{formatPhone(client.whatsapp)}</td>
                 <td className="actions">
                   <button
