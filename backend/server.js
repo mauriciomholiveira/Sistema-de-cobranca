@@ -952,3 +952,143 @@ app.put('/api/clientes/:id/aplicar-divisao', async (req, res) => {
         res.status(500).send('Erro ao aplicar divisão');
     }
 });
+
+// --- REPORTS ENDPOINTS ---
+
+// Get professor reports (Admin only)
+app.get('/api/relatorios/professores', authenticateToken, async (req, res) => {
+    try {
+        // Admin only
+        if (!req.user.is_admin) {
+            return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+        }
+
+        const mes = req.query.mes || new Date().toISOString().slice(0, 7);
+
+        // Get all professors with their statistics
+        const result = await db.query(`
+            SELECT 
+                p.id,
+                p.nome,
+                p.email,
+                p.pix,
+                -- Active students count
+                COALESCE((
+                    SELECT COUNT(DISTINCT m.cliente_id) 
+                    FROM matriculas m 
+                    JOIN clientes c ON m.cliente_id = c.id
+                    WHERE m.professor_id = p.id 
+                    AND m.active = true 
+                    AND c.active = true
+                ), 0) as alunos_ativos,
+                -- Inactive students count (students that were with this professor but are now inactive)
+                COALESCE((
+                    SELECT COUNT(DISTINCT m.cliente_id) 
+                    FROM matriculas m 
+                    JOIN clientes c ON m.cliente_id = c.id
+                    WHERE m.professor_id = p.id 
+                    AND (m.active = false OR c.active = false)
+                ), 0) as alunos_inativos,
+                -- Total expected for the month
+                COALESCE((
+                    SELECT SUM(pg.valor_cobrado) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1
+                ), 0) as total_mes,
+                -- Total paid
+                COALESCE((
+                    SELECT SUM(pg.valor_cobrado) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PAGO'
+                ), 0) as total_pago,
+                -- Total pending
+                COALESCE((
+                    SELECT SUM(pg.valor_cobrado) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PENDENTE'
+                ), 0) as total_pendente,
+                -- Total delayed
+                COALESCE((
+                    SELECT SUM(pg.valor_cobrado) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'ATRASADO'
+                ), 0) as total_atrasado,
+                -- Delayed count
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'ATRASADO'
+                ), 0) as qtd_atrasados,
+                -- Professor earnings (from paid)
+                COALESCE((
+                    SELECT SUM(pg.valor_professor_recebido) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PAGO'
+                ), 0) as professor_recebido,
+                -- Professor expected total
+                COALESCE((
+                    SELECT SUM(pg.valor_professor_recebido) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1
+                ), 0) as professor_total,
+                -- Church repasse (from paid)
+                COALESCE((
+                    SELECT SUM(pg.valor_igreja_recebido) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PAGO'
+                ), 0) as igreja_recebido,
+                -- Church expected total
+                COALESCE((
+                    SELECT SUM(pg.valor_igreja_recebido) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1
+                ), 0) as igreja_total,
+                -- Paid count
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PAGO'
+                ), 0) as qtd_pagos,
+                -- Pending count
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1 
+                    AND pg.status = 'PENDENTE'
+                ), 0) as qtd_pendentes,
+                -- Total payments count
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1
+                ), 0) as total_cobrancas
+            FROM professores p
+            WHERE p.active = true
+            ORDER BY p.nome
+        `, [mes]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Erro ao buscar relatório de professores:', err);
+        res.status(500).json({ error: 'Erro ao buscar relatório' });
+    }
+});

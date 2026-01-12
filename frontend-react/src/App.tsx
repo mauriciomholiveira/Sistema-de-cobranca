@@ -10,6 +10,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { ClientList } from './components/clients/ClientList';
 import { Management } from './components/management/Management';
 import { Billing } from './components/billing/Billing';
+import { Reports } from './components/reports/Reports';
 import { LoginPage } from './components/auth/LoginPage';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import './App.css';
@@ -49,6 +50,7 @@ function App() {
                       <Route path="clientes" element={<ClientList />} />
                       <Route path="cobranca" element={<Billing />} />
                       <Route path="gestao" element={<Management />} />
+                      <Route path="relatorios" element={<Reports />} />
                     </Route>
                   </Routes>
                 </Router>

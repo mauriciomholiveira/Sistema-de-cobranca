@@ -35,12 +35,13 @@ export const Sidebar: React.FC = () => {
     { path: '/dashboard', icon: 'fa-chart-line', label: 'Dashboard' },
     { path: '/clientes', icon: 'fa-users', label: 'Clientes' },
     { path: '/cobranca', icon: 'fa-file-invoice-dollar', label: 'Cobrança' },
-    { path: '/gestao', icon: 'fa-gear', label: 'Configurações' },
+    { path: '/relatorios', icon: 'fa-chart-bar', label: 'Relatórios', adminOnly: true },
+    { path: '/gestao', icon: 'fa-gear', label: 'Configurações', adminOnly: true },
   ];
 
-  // Filter out Gestao if not admin
+  // Filter menu items based on admin status
   const visibleMenuItems = menuItems.filter(item => {
-    if (item.path === '/gestao' && !user?.is_admin) return false;
+    if (item.adminOnly && !user?.is_admin) return false;
     return true;
   });
 
