@@ -270,7 +270,7 @@ app.post('/api/professores', async (req, res) => {
     try {
         await db.query(
             'INSERT INTO professores (nome, email, whatsapp, data_nascimento, pix, cpf, contato, endereco, dados_bancarios, senha, can_send_messages) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', 
-            [nome, email, whatsapp || null, data_nascimento, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null, passwordHash, can_send_messages || false]
+            [nome, email || null, whatsapp || null, data_nascimento || null, pix || null, cpf || null, contato || null, endereco || null, dados_bancarios || null, passwordHash, can_send_messages || false]
         );
         res.status(201).send();
     } catch (err) {
@@ -288,9 +288,9 @@ app.put('/api/professores/:id', async (req, res) => {
     let idx = 1;
 
     if (nome !== undefined) { fields.push(`nome = $${idx++}`); values.push(nome); }
-    if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email); }
+    if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email || null); }
     if (whatsapp !== undefined) { fields.push(`whatsapp = $${idx++}`); values.push(whatsapp); }
-    if (data_nascimento !== undefined) { fields.push(`data_nascimento = $${idx++}`); values.push(data_nascimento); }
+    if (data_nascimento !== undefined) { fields.push(`data_nascimento = $${idx++}`); values.push(data_nascimento || null); }
     if (pix !== undefined) { fields.push(`pix = $${idx++}`); values.push(pix); }
     if (cpf !== undefined) { fields.push(`cpf = $${idx++}`); values.push(cpf); }
     if (contato !== undefined) { fields.push(`contato = $${idx++}`); values.push(contato); }
@@ -989,6 +989,14 @@ app.get('/api/relatorios/professores', authenticateToken, async (req, res) => {
                     WHERE m.professor_id = p.id 
                     AND (m.active = false OR c.active = false)
                 ), 0) as alunos_inativos,
+                -- Exempt students count (status = 'ISENTO' OR valor_cobrado = 0)
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM pagamentos pg 
+                    WHERE pg.professor_id = p.id 
+                    AND pg.mes_ref = $1
+                    AND (pg.status = 'ISENTO' OR pg.valor_cobrado = 0)
+                ), 0) as alunos_isentos,
                 -- Total expected for the month
                 COALESCE((
                     SELECT SUM(pg.valor_cobrado) 

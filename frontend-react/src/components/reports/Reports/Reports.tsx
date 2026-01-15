@@ -11,6 +11,7 @@ interface ProfessorReport {
   pix: string;
   alunos_ativos: number;
   alunos_inativos: number;
+  alunos_isentos: number;
   total_mes: number;
   total_pago: number;
   total_pendente: number;
@@ -50,7 +51,17 @@ export const Reports: React.FC = () => {
     setLoading(true);
     try {
       const data = await api.get<ReportsResponse>(`/relatorios/professores?mes=${month}`);
-      setReports(data.professors);
+      // Filter out system admins AND anyone with 0 total students
+      const validProfessors = data.professors.filter(p => {
+        const name = p.nome?.toLowerCase() || '';
+        const email = p.email || '';
+        const isSystemAdmin = name.includes('administrador') || email.includes('admin@');
+        const hasStudents = (p.alunos_ativos + p.alunos_inativos + p.alunos_isentos) > 0;
+        
+        // Show if NOT system admin AND has at least one student (or valid activity)
+        return !isSystemAdmin && hasStudents;
+      });
+      setReports(validProfessors);
       setGlobalTotals(data.totals);
     } catch (err) {
       console.error('Erro ao carregar relatórios:', err);
@@ -209,6 +220,10 @@ export const Reports: React.FC = () => {
                 <div className="stat-item">
                   <span className="stat-label">Inativos</span>
                   <span className="stat-value muted">{professor.alunos_inativos}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Isentos</span>
+                  <span className="stat-value info">{professor.alunos_isentos}</span>
                 </div>
               </div>
             </div>

@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
       - ./backend/src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - cobranca_network
@@ -20,13 +20,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Remove restart: unless-stopped to respect manual user control
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: backend_cobranca
+    command: npm run dev
     ports:
       - "3000:3000"
     environment:
@@ -45,7 +45,6 @@ services:
         condition: service_healthy
     networks:
       - cobranca_network
-    # Hot reload enabled via 'npm run dev' inside container + bind mount
 
   frontend:
     build:
@@ -54,11 +53,12 @@ services:
     container_name: frontend_cobranca
     ports:
       - "5175:5175"
+    # No bind mounts - files are copied at build time for macOS stability
     volumes:
       - ./frontend-react:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:3000
+      - VITE_API_URL=http://localhost:3000/api
     depends_on:
       - backend
     networks:

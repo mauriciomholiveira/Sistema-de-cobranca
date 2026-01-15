@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 
@@ -9,11 +9,19 @@ export const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { signOut, user } = useAuth();
   const [schoolName, setSchoolName] = useState('Escola de Música');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Load school name from local storage or default
     const savedName = localStorage.getItem('premium_sys_school_name');
     if (savedName) setSchoolName(savedName);
+
+    // Load theme from local storage
+    const savedTheme = localStorage.getItem('premium_sys_theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
 
     // Listen for storage events to update real-time
     const handleStorageChange = () => {
@@ -30,6 +38,13 @@ export const Sidebar: React.FC = () => {
       window.removeEventListener('school_name_updated', handleStorageChange);
     };
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('premium_sys_theme', newTheme);
+  };
 
   const menuItems = [
     { path: '/dashboard', icon: 'fa-chart-line', label: 'Dashboard' },
@@ -78,13 +93,32 @@ export const Sidebar: React.FC = () => {
       <div className="sidebar-footer">
         {!isCollapsed && (
           <div className="school-info">
-            <span className="school-label">
-              {user?.is_admin ? 'Licenciado para:' : 'Professor:'}
-            </span>
+            <div className="school-info-header">
+              <span className="school-label">
+                {user?.is_admin ? 'Licenciado para:' : 'Professor:'}
+              </span>
+              <button 
+                className="theme-toggle-btn"
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+              >
+                <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+              </button>
+            </div>
             <span className="school-name" title={user?.is_admin ? schoolName : user?.nome}>
               {user?.is_admin ? schoolName : user?.nome}
             </span>
           </div>
+        )}
+        
+        {isCollapsed && (
+          <button 
+            className="theme-toggle-btn collapsed"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+          >
+            <i className={`fa-solid ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+          </button>
         )}
         
         <button 

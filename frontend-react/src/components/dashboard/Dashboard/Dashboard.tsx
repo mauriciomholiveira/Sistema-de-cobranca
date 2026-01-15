@@ -52,7 +52,14 @@ export const Dashboard: React.FC = () => {
   const fetchProfessorMetrics = async () => {
     try {
       const response = await api.get<ProfessorMetric[]>(`/dashboard/professores?mes=${selectedMonth}`);
-      setProfessorMetrics(response);
+      // Filter out system admins and professors with 0 students
+      const validProfessors = response.filter(p => {
+        const name = p.nome?.toLowerCase() || '';
+        const isSystemAdmin = name.includes('administrador') || name.includes('mauricio');
+        const hasStudents = Number(p.total_alunos) > 0;
+        return !isSystemAdmin && hasStudents;
+      });
+      setProfessorMetrics(validProfessors);
     } catch (err) {
       console.error('Erro ao carregar métricas de professores:', err);
     } finally {

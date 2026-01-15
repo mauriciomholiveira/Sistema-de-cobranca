@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/api';
+// Dynamic API URL for network access
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000/api`;
 
 class ApiService {
   private baseUrl: string;

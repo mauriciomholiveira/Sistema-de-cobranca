@@ -14,6 +14,7 @@ import { Reports } from './components/reports/Reports';
 import { LoginPage } from './components/auth/LoginPage';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import './App.css';
+import './theme-overrides.css';
 import './contexts/ToastContext.css';
 
 // Layout for authenticated pages (includes Sidebar)

@@ -6,10 +6,10 @@ COPY package*.json ./
 
 RUN npm install
 
-# Bind Modules for hot reload
-# COPY . . 
+# Copy all source files (no bind mount for stability on macOS)
+COPY . .
 
-EXPOSE 5173
+EXPOSE 5175
 
 # Expose host to allow access from outside container
 CMD ["npm", "run", "dev", "--", "--host"]

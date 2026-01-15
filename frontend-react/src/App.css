@@ -4,10 +4,61 @@
   box-sizing: border-box;
 }
 
+/* Dark Theme (default) */
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-primary: #6366f1;
+  --accent-secondary: #818cf8;
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --sidebar-bg: linear-gradient(180deg, #1a1f35 0%, #0f172a 100%);
+  --card-bg: #1e293b;
+  --input-bg: #0f172a;
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-muted: #475569;
+  --border-color: #cbd5e1;
+  --accent-primary: #4f46e5;
+  --accent-secondary: #6366f1;
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.1);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.1);
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.1);
+  --shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 4px 16px rgba(15, 23, 42, 0.04);
+  --sidebar-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --modal-overlay: rgba(15, 23, 42, 0.6);
+}
+
 body {
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: var(--bg-primary);
   min-height: 100vh;
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .app {
@@ -19,22 +70,13 @@ body {
   margin-left: 250px;
   flex: 1;
   min-height: 100vh;
+  background: var(--bg-primary);
+  transition: background 0.3s ease;
 }
 
 .placeholder {
   padding: 2rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 1.25rem;
   text-align: center;
-}
-
-/* Global styles */
-:root {
-  --primary: #8b5cf6;
-  --primary-dark: #7c3aed;
-  --success: #10b981;
-  --error: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
-  --bg-dark: #0f172a;
-  --bg-light: #1e293b;
 }

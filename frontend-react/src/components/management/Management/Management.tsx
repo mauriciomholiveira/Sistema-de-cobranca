@@ -507,6 +507,7 @@ export const Management: React.FC = () => {
               step="0.01"
               value={courseForm.mensalidade_padrao}
               onChange={(e) => setCourseForm({ ...courseForm, mensalidade_padrao: Number(e.target.value) })}
+              onFocus={(e) => e.target.select()}
               required
             />
           </div>
@@ -586,14 +587,7 @@ export const Management: React.FC = () => {
                 onChange={(e) => setProfessorForm({ ...professorForm, pix: e.target.value })}
               />
             </div>
-             <div className="form-group">
-              <label>Contato</label>
-              <input
-                type="text"
-                value={professorForm.contato || ''}
-                onChange={(e) => setProfessorForm({ ...professorForm, contato: e.target.value })}
-              />
-            </div>
+            {/* Contato field removed as requested - using WhatsApp instead */}
           </div>
 
           <div className="form-row">
